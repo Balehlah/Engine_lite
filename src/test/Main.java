@@ -3,7 +3,7 @@ import engine.Input;
 import engine.Window;
 
 import java.awt.Color;
-import Java.awt.Graphics;
+import java.awt.Graphics;
 
 public class Main extends Game {
     private int x = 100;
@@ -21,8 +21,8 @@ public class Main extends Game {
     public void update() {
         if (input.isKeyPressed(87)) y--; // W
         if (input.isKeyPressed(83)) y++; // S
-        if (input.isKeyPressed(65)) y--; // A
-        if (input.isKeyPressed(68)) y++; // D
+        if (input.isKeyPressed(65)) x--; // A
+        if (input.isKeyPressed(68)) x++; // D
     }
 
     public void render(Graphics g) {
@@ -33,8 +33,7 @@ public class Main extends Game {
         g.fillRect(x, y, 32, 32);
     }
 
-    public static void main (String[] args) {
+    public static void main(String[] args) {
         new Main();
     }
-
 }
