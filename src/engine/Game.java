@@ -7,6 +7,7 @@ import java.awt.image.BufferStrategy;
 public abstract class Game extends Canvas implements Runnable {
     private Thread thread;
     private boolean running = false;
+
     public void start() {
         thread = new Thread(this);
         thread.start();
@@ -20,7 +21,7 @@ public abstract class Game extends Canvas implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }    
+    }
 
     public abstract void update();
     public abstract void render(Graphics g);
@@ -44,7 +45,7 @@ public abstract class Game extends Canvas implements Runnable {
                 update();
                 delta--;
             }
-            
+
             Graphics g = bs.getDrawGraphics();
             render(g);
             g.dispose();
