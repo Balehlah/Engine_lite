@@ -1,6 +1,7 @@
 import engine.Game;
 import engine.Input;
 import engine.Window;
+
 import java.awt.Color;
 import java.awt.Graphics;
 
@@ -14,7 +15,7 @@ public class Main extends Game {
         addKeyListener(input);
         setFocusable(true);
         requestFocus();
-        new Window(800, 600, "Project_Core", this);
+        new Window(800, 600, "Meu Jogo", this);
     }
 
     public void update() {
