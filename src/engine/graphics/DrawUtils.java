@@ -1,8 +1,7 @@
 package engine.graphics;
 
-import engine.math.Vector2;
 import engine.math.Rectangle;
-
+import engine.math.Vector2;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
