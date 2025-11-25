@@ -15,6 +15,11 @@ Engine 2D profissional em Java puro para jogos pixel art. Arquitetura modular, l
 - ✅ **Asset Manager** - Cache inteligente com hot-reload
 - ✅ **Math Library** - Vector2, Rectangle
 - ✅ **Paletas de Cores** - PICO-8, GameBoy, NES, CGA
+- ✅ **Sistema de Áudio** - Sons, música, áudio espacial
+- ✅ **Tilemap** - Mapas baseados em tiles com colisão
+- ✅ **Física/Colisão** - AABB, raycasting, detecção de colisão
+- ✅ **Partículas** - Sistema eficiente com presets
+- ✅ **Serialização** - Salvar/carregar cenas e tilemaps
 
 ## 📁 Estrutura
 
@@ -38,7 +43,10 @@ src/
 │   │   ├── Animation.java    # Animações
 │   │   ├── Camera.java       # Câmera 2D
 │   │   ├── ColorPalette.java # Paletas pixel art
-│   │   └── DrawUtils.java    # Primitivas
+│   │   ├── DrawUtils.java    # Primitivas
+│   │   ├── Particle.java     # Partícula individual
+│   │   ├── ParticleEmitter.java # Configuração de emissão
+│   │   └── ParticleSystem.java  # Sistema de partículas
 │   │
 │   ├── input/          # Input
 │   │   ├── Input.java        # Facade unificada
@@ -48,6 +56,24 @@ src/
 │   ├── assets/         # Assets
 │   │   ├── AssetManager.java # Gerenciador de assets
 │   │   └── TextureLoader.java# Carregamento de texturas
+│   │
+│   ├── audio/          # Áudio
+│   │   ├── AudioManager.java # Gerenciador de áudio
+│   │   ├── Sound.java        # Efeitos sonoros
+│   │   └── Music.java        # Música de fundo
+│   │
+│   ├── tilemap/        # Mapas de tiles
+│   │   ├── Tileset.java      # Conjunto de tiles
+│   │   ├── Tilemap.java      # Mapa de tiles
+│   │   └── TilemapRenderer.java # Renderizador
+│   │
+│   ├── physics/        # Física e colisão
+│   │   ├── AABB.java         # Bounding box
+│   │   ├── Raycast.java      # Raycasting
+│   │   └── Collision.java    # Utilitários de colisão
+│   │
+│   ├── io/             # Entrada/Saída
+│   │   └── SceneSerializer.java # Serialização
 │   │
 │   ├── math/           # Matemática
 │   │   ├── Vector2.java      # Vetor 2D
@@ -178,12 +204,15 @@ ColorPalette.CGA
 
 ## 📈 Evolução Futura
 
-- [ ] Sistema de áudio
-- [ ] Tilemap renderer
-- [ ] Sistema de colisão
-- [ ] Partículas simples
-- [ ] Serialização de cenas
+- [x] ~~Sistema de áudio~~ ✅ v2.0.0
+- [x] ~~Tilemap renderer~~ ✅ v2.0.0
+- [x] ~~Sistema de colisão~~ ✅ v2.0.0
+- [x] ~~Partículas simples~~ ✅ v2.0.0
+- [x] ~~Serialização de cenas~~ ✅ v2.0.0
 - [ ] Tween/Easing library
+- [ ] Sistema de UI
+- [ ] Pathfinding
+- [ ] Suporte a gamepad
 
 ## 📄 Licença
 

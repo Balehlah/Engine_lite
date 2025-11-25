@@ -11,7 +11,18 @@ mkdir bin
 
 REM Compila todos os arquivos Java com encoding UTF-8
 echo Compilando engine...
-javac -encoding UTF-8 -d bin -sourcepath src src/engine/math/*.java src/engine/util/*.java src/engine/core/*.java src/engine/display/*.java src/engine/input/*.java src/engine/graphics/*.java src/engine/assets/*.java
+javac -encoding UTF-8 -d bin -sourcepath src ^
+    src/engine/math/*.java ^
+    src/engine/util/*.java ^
+    src/engine/core/*.java ^
+    src/engine/display/*.java ^
+    src/engine/input/*.java ^
+    src/engine/graphics/*.java ^
+    src/engine/assets/*.java ^
+    src/engine/audio/*.java ^
+    src/engine/tilemap/*.java ^
+    src/engine/physics/*.java ^
+    src/engine/io/*.java
 
 if %ERRORLEVEL% neq 0 (
     echo ERRO: Falha ao compilar engine!
