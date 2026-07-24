@@ -4,9 +4,27 @@ Todas as mudancas notaveis neste projeto serao documentadas neste arquivo.
 
 O formato e baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## Política da futura 1.0.0
+
+Os registros `prototype-1.0.0` e `prototype-2.0.0` abaixo são marcos históricos
+do protótipo em 2025. Eles não tiveram tags, artifacts publicados ou baseline de
+API e, portanto, não constituem releases SemVer.
+
+A futura `v1.0.0` será a primeira release pública suportada do Engine Lite. A
+política completa está em [docs/versioning.md](docs/versioning.md).
+
+## [Unreleased]
+
+### Documentação
+
+- Registradas as decisões de produto, plataformas, Java, licença, API,
+  viewport e backend da Issue #9.
+- Adicionados ADRs, auditoria de fundação, roadmap e política de versionamento.
+- Definido gate mensurável e fallback para o spike libGDX/LWJGL3.
+
 ---
 
-## [2.0.0] - 2025-11-25
+## [prototype-2.0.0] - 2025-11-25
 
 ### Adicionado
 
@@ -144,7 +162,7 @@ src/engine/
 
 ---
 
-## [1.0.0] - 2025-11-25
+## [prototype-1.0.0] - 2025-11-25
 
 ### Adicionado
 
