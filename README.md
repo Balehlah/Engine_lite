@@ -1,6 +1,17 @@
-# 🎮 Pixel Engine Gabriel 2025
+# 🎮 Engine Lite
 
 Engine 2D profissional em Java puro para jogos pixel art. Arquitetura modular, limpa e extensível.
+
+## Estado do projeto
+
+O código atual é um protótipo pré-1.0 baseado em Java2D. O produto é o motor;
+`game.test` é apenas uma demo consumidora. A futura versão 1.0.0 será a primeira
+release pública com contrato SemVer e API estável auditada.
+
+As decisões de fundação estão em
+[ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md), o plano de execução em
+[ROADMAP.md](ROADMAP.md) e a auditoria do protótipo em
+[PROJECT_AUDIT.md](PROJECT_AUDIT.md).
 
 ## 📋 Características
 
@@ -154,8 +165,20 @@ public class MeuJogo extends Game {
 1. **Baixo Acoplamento** - Módulos independentes
 2. **Alta Coesão** - Cada classe tem uma responsabilidade
 3. **API Clara** - Engine nunca depende do jogo
-4. **Zero Dependências** - Apenas Java padrão (Java2D)
+4. **Core independente de backend** - Java2D permanece legado até o spike de libGDX/LWJGL3
 5. **Pixel-Perfect** - Otimizado para pixel art
+
+### Contratos de fundação
+
+- Desktop suportado: Windows, Linux e macOS.
+- Runtime baseline: Java 21 LTS; compatibilidade adicional em Java 25 LTS.
+- Viewport virtual provisório: 320×180, nearest-neighbor e escala inteira.
+- API estável futura: `engine.api.*`.
+- Implementação interna: `engine.internal.*`.
+- APIs experimentais: `engine.incubator.*`.
+
+Os pacotes atuais em `engine.*` continuam sendo protótipo até a classificação da
+Issue #13. Consulte [docs/versioning.md](docs/versioning.md).
 
 ### Fluxo Principal
 
@@ -199,16 +222,18 @@ ColorPalette.CGA
 
 ## 🔧 Requisitos
 
-- Java 11+ (recomendado Java 17+)
+- Java 21 LTS
+- Java 25 LTS é uma linha adicional de compatibilidade, não a baseline
+- Windows, Linux ou macOS
 - Nenhuma dependência externa
 
 ## 📈 Evolução Futura
 
-- [x] ~~Sistema de áudio~~ ✅ v2.0.0
-- [x] ~~Tilemap renderer~~ ✅ v2.0.0
-- [x] ~~Sistema de colisão~~ ✅ v2.0.0
-- [x] ~~Partículas simples~~ ✅ v2.0.0
-- [x] ~~Serialização de cenas~~ ✅ v2.0.0
+- [x] ~~Sistema de áudio~~ ✅ prototype-2.0.0
+- [x] ~~Tilemap renderer~~ ✅ prototype-2.0.0
+- [x] ~~Sistema de colisão~~ ✅ prototype-2.0.0
+- [x] ~~Partículas simples~~ ✅ prototype-2.0.0
+- [x] ~~Serialização de cenas~~ ✅ prototype-2.0.0
 - [ ] Tween/Easing library
 - [ ] Sistema de UI
 - [ ] Pathfinding
@@ -216,4 +241,7 @@ ColorPalette.CGA
 
 ## 📄 Licença
 
-Projeto pessoal de Gabriel - 2025
+A licença Apache-2.0 foi aprovada para o código na
+[ADR-004](docs/adr/ADR-004-license-and-assets.md). O arquivo `LICENSE`, notices e
+inventário de assets serão materializados pela Issue #13; até lá, o protótipo
+não deve ser tratado como uma release licenciada.
