@@ -1,0 +1,49 @@
+# Captured from the tracked bin/ directory before its removal for Issue #10.
+# source-count: 37
+# pre-removal-class-count: 45
+# expected-gradle-class-count: 44
+# stale-class: engine/graphics/Animation$1.class (old synthetic enum-switch helper)
+engine/assets/AssetManager.class
+engine/assets/TextureLoader.class
+engine/audio/AudioManager.class
+engine/audio/Music.class
+engine/audio/Sound.class
+engine/core/Component.class
+engine/core/Entity.class
+engine/core/Game.class
+engine/core/Scene.class
+engine/core/SceneManager.class
+engine/core/Timer.class
+engine/display/Window.class
+engine/graphics/Animation$PlayMode.class
+engine/graphics/Animation.class
+engine/graphics/Camera.class
+engine/graphics/ColorPalette.class
+engine/graphics/DrawUtils.class
+engine/graphics/Particle.class
+engine/graphics/ParticleEmitter.class
+engine/graphics/ParticleSystem.class
+engine/graphics/Renderer.class
+engine/graphics/Sprite.class
+engine/input/Input.class
+engine/input/Keyboard.class
+engine/input/Mouse.class
+engine/io/SceneSerializer$EntityData.class
+engine/io/SceneSerializer$SceneData.class
+engine/io/SceneSerializer$TilemapData.class
+engine/io/SceneSerializer.class
+engine/math/Rectangle.class
+engine/math/Vector2.class
+engine/physics/AABB.class
+engine/physics/Collision.class
+engine/physics/Raycast.class
+engine/tilemap/Tilemap.class
+engine/tilemap/TilemapRenderer.class
+engine/tilemap/Tileset.class
+engine/util/Logger$Level.class
+engine/util/Logger.class
+engine/util/RandomUtils.class
+game/test/Main.class
+game/test/TestScene$GroundEntity.class
+game/test/TestScene$PlayerEntity.class
+game/test/TestScene.class

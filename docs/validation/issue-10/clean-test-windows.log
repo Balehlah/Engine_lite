@@ -1,0 +1,24 @@
+Command: gradlew.bat --no-daemon clean test
+Context: clean local clone; no bin/, build/, .gradle/ or untracked files
+Script modes before clone:
+  100755 build.sh
+  100755 gradlew
+  100755 run.sh
+
+> Task :verifyLegacyClassParity
+Verified legacy parity: 37 sources -> 44 classes.
+
+> Task :verifyNoBinInput
+Verified: no Gradle source set reads bin/.
+
+> Task :verifyRootDoesNotPublishJar
+Verified: the root project has no jar task.
+
+> Task :engine:core:verifyBackendIndependence
+Verified engine:core boundary across 4 source files.
+
+> Task :test
+
+BUILD SUCCESSFUL in 17s
+15 actionable tasks: 6 executed, 3 from cache, 6 up-to-date
+Exit code: 0

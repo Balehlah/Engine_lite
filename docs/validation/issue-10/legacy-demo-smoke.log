@@ -1,0 +1,21 @@
+Command: gradlew.bat --no-daemon legacyDemoSmoke
+
+> Task :game:legacyDemoSmoke
+[INFO] PIXEL ENGINE - Inicializando...
+[INFO] Janela criada: 800x600
+[INFO] Renderer inicializado
+[INFO] Timer inicializado
+[INFO] Input registrado
+[INFO] Inicializando jogo de demonstração...
+[INFO] Jogo inicializado!
+[INFO] Engine pronta!
+[INFO] Encerrando engine...
+[INFO] Encerrando jogo...
+[INFO] SceneManager limpo
+[INFO] Engine encerrada.
+[INFO] LEGACY_DEMO_SMOKE_OK
+
+> Task :legacyDemoSmoke
+
+BUILD SUCCESSFUL
+Exit code: 0
