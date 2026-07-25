@@ -1,0 +1,13 @@
+# Gradle
+.gradle/
+**/build/
+
+# Legacy/manual compiler output
+bin/
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

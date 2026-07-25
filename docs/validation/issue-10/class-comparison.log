@@ -1,0 +1,19 @@
+Baseline captured before bin/ removal:
+  Java sources: 37
+  Tracked class files: 45
+
+Gradle 9.6.1 / javac --release 21 output:
+  engine:core main classes
+  desktop legacy classes
+  game main classes
+  Combined class files: 44
+
+Documented stale binary:
+  engine/graphics/Animation$1.class
+  Reason: synthetic enum-switch helper emitted by an older compiler and not
+          emitted by javac 21 for the current source.
+
+Final gates:
+  Verified legacy parity: 37 sources -> 44 classes.
+  bin/ exists after removal: false
+  Exit code: 0

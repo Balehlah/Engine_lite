@@ -4,6 +4,7 @@ import engine.core.Game;
 import engine.core.SceneManager;
 import engine.graphics.Renderer;
 import engine.util.Logger;
+import java.util.Arrays;
 
 /**
  * Exemplo de jogo usando a Pixel Engine.
@@ -72,7 +73,13 @@ public class Main extends Game {
         
         // Cria e inicia o jogo
         Main game = new Main();
-        game.start();
+        if (Arrays.asList(args).contains("--smoke")) {
+            // Executa init/cleanup no thread principal. Qualquer falha gera exit code != 0.
+            game.run();
+            Logger.info("LEGACY_DEMO_SMOKE_OK");
+        } else {
+            game.start();
+        }
     }
 }
 

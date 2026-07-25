@@ -102,20 +102,52 @@ src/
 
 ## 🚀 Como Usar
 
-### Build & Run (Windows)
+### Build e testes reproduzíveis
+
+Java 21 LTS é a toolchain fixa. O Gradle Wrapper 9.6.1 é a única entrada
+canônica do build e baixa a distribuição fixada quando necessário.
+
+No Windows:
 
 ```batch
-build.bat
-run.bat
+gradlew.bat clean test
+gradlew.bat projects
 ```
 
-### Build & Run (Linux/Mac)
+No Linux/macOS:
 
 ```bash
-chmod +x build.sh run.sh
-./build.sh
-./run.sh
+./gradlew clean test
+./gradlew projects
 ```
+
+`build.bat` e `build.sh` continuam como aliases de compatibilidade para
+`clean test`; eles não mantêm listas manuais de fontes.
+
+### Demo Java2D transitória
+
+O Java2D atual ainda não representa o backend da futura 1.0.0. Durante a
+migração, a demo é executada pelo classpath produzido pelo source set `legacy`:
+
+```batch
+gradlew.bat legacyDemo
+```
+
+```bash
+./gradlew legacyDemo
+```
+
+O smoke autoencerrável usado na validação é `legacyDemoSmoke`. Os aliases
+`run.bat` e `run.sh` continuam disponíveis até a remoção formal do boundary
+legado.
+
+### Módulos Gradle
+
+- `engine:core`: classes já independentes de AWT, libGDX e LWJGL;
+- `engine:gdx`: boundary vazio reservado ao spike da Issue #14;
+- `desktop`: backend Java2D atual no source set transitório `legacy`;
+- `game`: demo consumidora e seu ponto de entrada;
+- raiz: somente agregação; não produz JAR monolítico.
 
 ### Controles do Demo
 

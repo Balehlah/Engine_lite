@@ -1,0 +1,11 @@
+Command: gradlew.bat --no-daemon projects
+
+Root project 'engine-lite'
++--- Project ':desktop' - Desktop boundary and transitional Java2D backend.
++--- Project ':engine'
+|    +--- Project ':engine:core' - Backend-neutral Engine Lite core extracted from the legacy source tree.
+|    \--- Project ':engine:gdx' - Reserved boundary without libGDX/LWJGL dependencies until the Issue #14 spike.
+\--- Project ':game' - Reference game consuming the transitional desktop backend.
+
+BUILD SUCCESSFUL
+Exit code: 0

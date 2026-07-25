@@ -1,0 +1,21 @@
+Command: ./gradlew --no-daemon clean test
+Shell: Git Bash (POSIX launcher)
+Context: same clean local clone; gradlew mode 100755
+
+> Task :verifyLegacyClassParity
+Verified legacy parity: 37 sources -> 44 classes.
+
+> Task :verifyNoBinInput
+Verified: no Gradle source set reads bin/.
+
+> Task :verifyRootDoesNotPublishJar
+Verified: the root project has no jar task.
+
+> Task :engine:core:verifyBackendIndependence
+Verified engine:core boundary across 4 source files.
+
+> Task :test
+
+BUILD SUCCESSFUL in 14s
+15 actionable tasks: 9 executed, 3 from cache, 3 up-to-date
+Exit code: 0
