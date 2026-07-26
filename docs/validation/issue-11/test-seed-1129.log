@@ -1,0 +1,32 @@
+Issue #11 - execucao completa com ordem variavel
+Data: 2026-07-26
+Seed: 1129
+Build cache: desabilitado
+Build root: C:\Dev\Engine_lite-issue11-build
+Comando:
+  gradlew.bat --no-daemon --no-build-cache clean test
+    -PtestRandomSeed=1129
+    -PisolatedBuildRoot=C:\Dev\Engine_lite-issue11-build
+
+Resultado:
+  Exit code: 0
+  BUILD SUCCESSFUL in 23s
+  21 actionable tasks: 19 executed, 2 up-to-date
+  34 tests discovered
+  22 passed
+  12 skipped specifications
+  0 failures
+  0 errors
+
+Ordem observada (amostra):
+  desktop class first: InputCharacterizationTest
+  desktop class last: AnimationCharacterizationTest
+  core method first: divisionByZeroIsRejected
+
+Gates:
+  verifyJUnitReports: PASS
+  verifyBackendIndependence: PASS
+  verifyLegacyClassParity: PASS (37 sources -> 44 classes)
+  verifyNoBinInput: PASS
+  verifyRootDoesNotPublishJar: PASS
+  aggregateTestReport: PASS
