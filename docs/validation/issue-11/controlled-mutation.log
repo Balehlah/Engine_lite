@@ -1,0 +1,35 @@
+Issue #11 - mutacao controlada
+Data: 2026-07-26
+Seed: 1193
+
+Mutacao temporaria:
+  src/engine/math/Vector2.java
+  Vector2.add(Vector2):
+    x + other.x  ->  x - other.x
+    y + other.y  ->  y - other.y
+
+Comando focado:
+  gradlew.bat --no-daemon --no-build-cache --rerun-tasks
+    :engine:core:test
+    --tests engine.math.Vector2SpecificationTest.arithmeticReturnsNewValuesWithoutMutatingTheOperands
+    -PtestRandomSeed=1193
+    -PisolatedBuildRoot=C:\Dev\Engine_lite-issue11-build
+
+Resultado esperado e observado:
+  Exit code: 1
+  1 test completed, 1 failed
+  Vector2SpecificationTest >
+    arithmeticReturnsNewValuesWithoutMutatingTheOperands() FAILED
+  BUILD FAILED in 17s
+
+Rollback:
+  A soma original foi restaurada imediatamente com apply_patch.
+  O diff final de src/engine/math/Vector2.java ficou vazio.
+
+Validacao apos rollback:
+  gradlew.bat --no-daemon --no-build-cache clean test
+    -PtestRandomSeed=1193
+    -PisolatedBuildRoot=C:\Dev\Engine_lite-issue11-build
+  Exit code: 0
+  BUILD SUCCESSFUL in 24s
+  34 tests discovered; 22 passed; 12 skipped; 0 failures; 0 errors

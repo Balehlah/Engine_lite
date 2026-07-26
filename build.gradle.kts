@@ -5,11 +5,24 @@ import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.TestReport
 import org.gradle.api.tasks.wrapper.Wrapper
 import java.nio.file.Files
 
 plugins {
     base
+}
+
+providers.gradleProperty("isolatedBuildRoot").orNull?.let { configuredRoot ->
+    val isolatedBuildRoot = file(configuredRoot)
+    allprojects {
+        val projectRelativePath = if (path == ":") {
+            "root"
+        } else {
+            path.removePrefix(":").replace(':', File.separatorChar)
+        }
+        layout.buildDirectory.set(isolatedBuildRoot.resolve(projectRelativePath))
+    }
 }
 
 allprojects {
@@ -36,6 +49,10 @@ allprojects {
 subprojects {
     apply(plugin = "base")
 
+    repositories {
+        mavenCentral()
+    }
+
     pluginManager.withPlugin("java") {
         extensions.configure<JavaPluginExtension> {
             toolchain {
@@ -54,7 +71,68 @@ subprojects {
     }
 
     tasks.withType<Test>().configureEach {
+        val randomSeed = providers.gradleProperty("testRandomSeed").orElse("11")
+        val includedTags = providers.gradleProperty("includeTags").orNull
+            ?.split(",")
+            ?.map(String::trim)
+            ?.filter(String::isNotEmpty)
+            .orEmpty()
+        val excludedTags = providers.gradleProperty("excludeTags").orNull
+            ?.split(",")
+            ?.map(String::trim)
+            ?.filter(String::isNotEmpty)
+            .orEmpty()
+
+        useJUnitPlatform {
+            if (includedTags.isNotEmpty()) {
+                includeTags(*includedTags.toTypedArray())
+            }
+            if (excludedTags.isNotEmpty()) {
+                excludeTags(*excludedTags.toTypedArray())
+            }
+        }
+
         systemProperty("file.encoding", "UTF-8")
+        systemProperty("java.awt.headless", "true")
+        systemProperty("junit.jupiter.execution.order.random.seed", randomSeed.get())
+        systemProperty(
+            "junit.jupiter.testclass.order.default",
+            "org.junit.jupiter.api.ClassOrderer\$Random",
+        )
+        systemProperty(
+            "junit.jupiter.testmethod.order.default",
+            "org.junit.jupiter.api.MethodOrderer\$Random",
+        )
+
+        reports {
+            junitXml.required.set(true)
+            junitXml.isOutputPerTestCase = true
+            html.required.set(true)
+        }
+
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+
+        doFirst {
+            if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) {
+                listOf(
+                    binaryResultsDirectory.get().asFile,
+                    reports.junitXml.outputLocation.get().asFile,
+                    reports.html.outputLocation.get().asFile,
+                )
+                    .filter(File::exists)
+                    .forEach { output ->
+                        output.walkBottomUp().forEach { entry ->
+                            entry.setWritable(true, false)
+                            runCatching {
+                                Files.setAttribute(entry.toPath(), "dos:readonly", false)
+                            }
+                        }
+                    }
+            }
+            logger.lifecycle("JUnit random seed for $path: ${randomSeed.get()}")
+        }
     }
 
     tasks.withType<JavaExec>().configureEach {
@@ -149,9 +227,12 @@ val verifyLegacyClassParity = tasks.register("verifyLegacyClassParity") {
             .walkTopDown()
             .count { it.isFile && it.extension == "java" }
         val classRoots = listOf(
-            layout.projectDirectory.dir("engine/core/build/classes/java/main").asFile,
-            layout.projectDirectory.dir("desktop/build/classes/java/legacy").asFile,
-            layout.projectDirectory.dir("game/build/classes/java/main").asFile,
+            project(":engine:core")
+                .layout.buildDirectory.dir("classes/java/main").get().asFile,
+            project(":desktop")
+                .layout.buildDirectory.dir("classes/java/legacy").get().asFile,
+            project(":game")
+                .layout.buildDirectory.dir("classes/java/main").get().asFile,
         )
         val actualClasses = classRoots
             .filter { it.exists() }
@@ -192,6 +273,55 @@ val test = tasks.register("test") {
         verifyRootDoesNotPublishJar,
         verifyLegacyClassParity,
     )
+}
+
+val aggregateTestReport = tasks.register<TestReport>("aggregateTestReport") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = "Publishes one HTML report containing every module test result."
+    destinationDirectory.set(layout.buildDirectory.dir("reports/tests/aggregate"))
+    testResults.from(buildModules.map { module -> module.tasks.withType<Test>() })
+}
+
+val verifyJUnitReports = tasks.register("verifyJUnitReports") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = "Fails unless the JUnit XML and HTML reports required by Issue #11 exist."
+    dependsOn(
+        ":engine:core:test",
+        ":desktop:test",
+    )
+
+    doLast {
+        val testedModules = listOf(
+            project(":engine:core"),
+            project(":desktop"),
+        )
+        val missingReports = testedModules.flatMap { module ->
+            val buildDirectory = module.layout.buildDirectory.get().asFile
+            val xmlDirectory = buildDirectory.resolve("test-results/test")
+            val htmlIndex = buildDirectory.resolve("reports/tests/test/index.html")
+            buildList {
+                if (!xmlDirectory
+                        .walkTopDown()
+                        .any { it.isFile && it.extension.equals("xml", ignoreCase = true) }
+                ) {
+                    add("${module.path}: JUnit XML in $xmlDirectory")
+                }
+                if (!htmlIndex.isFile) {
+                    add("${module.path}: HTML report at $htmlIndex")
+                }
+            }
+        }
+
+        check(missingReports.isEmpty()) {
+            "Required JUnit reports were not published:\n${missingReports.joinToString("\n")}"
+        }
+        logger.lifecycle("Verified JUnit XML and HTML reports for engine:core and desktop.")
+    }
+}
+
+test.configure {
+    dependsOn(verifyJUnitReports)
+    finalizedBy(aggregateTestReport)
 }
 
 tasks.named("check") {

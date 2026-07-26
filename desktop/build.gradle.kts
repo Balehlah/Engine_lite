@@ -20,6 +20,11 @@ val legacy = sourceSets.create("legacy") {
 
 dependencies {
     add(legacy.implementationConfigurationName, project(":engine:core"))
+    testImplementation(platform("org.junit:junit-bom:5.14.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation(project(":engine:core"))
+    testImplementation(files(legacy.output))
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 val legacyJar = tasks.register<Jar>("legacyJar") {

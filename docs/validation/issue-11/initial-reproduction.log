@@ -1,0 +1,15 @@
+Issue #11 - reproducao inicial antes da suite JUnit
+Data: 2026-07-26
+Base: 3457393
+Ambiente: Windows NT 10.0.26200.0 amd64; Temurin 21.0.3 LTS
+Comando: javac --release 21 ... && java -Djava.awt.headless=true Issue11Probe
+
+INPUT_KEY quickEdge down=false pressed=false released=false
+INPUT_MOUSE quickEdge down=false pressed=false released=false delta=Vector2(0,00, 0,00) scroll=2
+ANIMATION oneFramePingPongIndex=-1
+RAYCAST hitThenMiss first=true second=false retainedHit=true retainedPoint=Vector2(2,00, 0,00)
+RAYCAST zeroDirection result=true hit=true distance=NaN point=Vector2(NaN, NaN)
+MATH_AABB invalidAccepted x=NaN width=-1.0
+COLLISION zeroVelocitySweep=NaN
+TILE negativeWorld=Vector2(0,00, 0,00)
+SERIALIZER malformedException=NumberFormatException
