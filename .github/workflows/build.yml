@@ -1,0 +1,94 @@
+name: Desktop CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu
+            runner: ubuntu-24.04
+            gradle: ./gradlew
+            seed: 1201
+          - name: Windows
+            runner: windows-2025
+            gradle: .\gradlew.bat
+            seed: 1202
+          - name: macOS
+            runner: macos-15-intel
+            gradle: ./gradlew
+            seed: 1203
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Set up Java 21 and 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          architecture: x64
+          java-version: |
+            25
+            21
+
+      - name: Validate Wrapper and set up Gradle cache
+        id: setup-gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+          cache-read-only: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+          validate-wrappers: true
+
+      - name: Record build environment
+        run: |
+          echo "runner.os=${{ runner.os }}"
+          echo "runner.arch=${{ runner.arch }}"
+          echo "runner.image=${{ matrix.runner }}"
+          echo "revision=${{ github.sha }}"
+          java -version
+          ${{ matrix.gradle }} --version
+
+      - name: Clean test on Java 21
+        timeout-minutes: 15
+        run: ${{ matrix.gradle }} --no-daemon --stacktrace clean test -PtestRandomSeed=${{ matrix.seed }}
+
+      - name: Demonstrate Gradle build-cache reuse
+        if: matrix.name == 'Ubuntu'
+        timeout-minutes: 10
+        run: ${{ matrix.gradle }} --no-daemon --info clean test -PtestRandomSeed=${{ matrix.seed }}
+
+      - name: Java 25 compatibility smoke
+        timeout-minutes: 10
+        run: ${{ matrix.gradle }} --no-daemon --stacktrace java25CompatibilityTest -PtestRandomSeed=${{ matrix.seed }}
+
+      - name: Upload JUnit and HTML reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-${{ matrix.name }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            **/build/test-results/test/**
+            **/build/reports/tests/test/**
+            **/build/test-results/java25CompatibilityTest/**
+            **/build/reports/tests/java25CompatibilityTest/**
+            build/reports/tests/aggregate/**
