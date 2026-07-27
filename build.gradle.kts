@@ -7,6 +7,7 @@ import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.TestReport
 import org.gradle.api.tasks.wrapper.Wrapper
+import org.gradle.jvm.toolchain.JavaToolchainService
 import java.nio.file.Files
 
 plugins {
@@ -58,6 +59,22 @@ subprojects {
             toolchain {
                 languageVersion = JavaLanguageVersion.of(21)
             }
+        }
+
+        val sourceSets = extensions.getByType<SourceSetContainer>()
+        val javaToolchains = extensions.getByType<JavaToolchainService>()
+
+        tasks.register<Test>("java25CompatibilityTest") {
+            group = LifecycleBasePlugin.VERIFICATION_GROUP
+            description = "Runs the module test suite on Java 25 while production bytecode stays on Java 21."
+            testClassesDirs = sourceSets.named("test").get().output.classesDirs
+            classpath = sourceSets.named("test").get().runtimeClasspath
+            javaLauncher.set(
+                javaToolchains.launcherFor {
+                    languageVersion.set(JavaLanguageVersion.of(25))
+                },
+            )
+            shouldRunAfter(tasks.named("test"))
         }
     }
 
@@ -279,7 +296,11 @@ val aggregateTestReport = tasks.register<TestReport>("aggregateTestReport") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
     description = "Publishes one HTML report containing every module test result."
     destinationDirectory.set(layout.buildDirectory.dir("reports/tests/aggregate"))
-    testResults.from(buildModules.map { module -> module.tasks.withType<Test>() })
+    testResults.from(
+        buildModules.map { module ->
+            module.tasks.withType<Test>().matching { it.name == "test" }
+        },
+    )
 }
 
 val verifyJUnitReports = tasks.register("verifyJUnitReports") {
@@ -322,6 +343,54 @@ val verifyJUnitReports = tasks.register("verifyJUnitReports") {
 test.configure {
     dependsOn(verifyJUnitReports)
     finalizedBy(aggregateTestReport)
+}
+
+val verifyJava25Reports = tasks.register("verifyJava25Reports") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = "Fails unless the Java 25 compatibility reports required by ADR-001 exist."
+    dependsOn(
+        ":engine:core:java25CompatibilityTest",
+        ":desktop:java25CompatibilityTest",
+    )
+
+    doLast {
+        val testedModules = listOf(
+            project(":engine:core"),
+            project(":desktop"),
+        )
+        val missingReports = testedModules.flatMap { module ->
+            val buildDirectory = module.layout.buildDirectory.get().asFile
+            val xmlDirectory = buildDirectory.resolve("test-results/java25CompatibilityTest")
+            val htmlIndex = buildDirectory
+                .resolve("reports/tests/java25CompatibilityTest/index.html")
+            buildList {
+                if (!xmlDirectory
+                        .walkTopDown()
+                        .any { it.isFile && it.extension.equals("xml", ignoreCase = true) }
+                ) {
+                    add("${module.path}: Java 25 JUnit XML in $xmlDirectory")
+                }
+                if (!htmlIndex.isFile) {
+                    add("${module.path}: Java 25 HTML report at $htmlIndex")
+                }
+            }
+        }
+
+        check(missingReports.isEmpty()) {
+            "Required Java 25 compatibility reports were not published:\n" +
+                missingReports.joinToString("\n")
+        }
+        logger.lifecycle("Verified Java 25 JUnit XML and HTML reports for engine:core and desktop.")
+    }
+}
+
+tasks.register("java25CompatibilityTest") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = "Runs all module tests on Java 25 and verifies their reports."
+    dependsOn(
+        buildModules.map { "${it.path}:java25CompatibilityTest" },
+        verifyJava25Reports,
+    )
 }
 
 tasks.named("check") {
