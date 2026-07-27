@@ -66,6 +66,11 @@ jobs:
           java -version
           ${{ matrix.gradle }} --version
 
+      - name: Controlled Windows failure injection
+        if: matrix.name == 'Windows'
+        timeout-minutes: 1
+        run: ${{ matrix.gradle }} --no-daemon intentionallyMissingCiTask
+
       - name: Clean test on Java 21
         timeout-minutes: 15
         run: ${{ matrix.gradle }} --no-daemon --stacktrace clean test -PtestRandomSeed=${{ matrix.seed }}
