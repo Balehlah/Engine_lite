@@ -25,8 +25,13 @@ Cada check:
    os testes em Java 25;
 6. valida baseline/API, licenças, assets e conteúdo dos JARs como parte de
    `clean test`;
-7. publica XML JUnit, HTML e os relatórios de distribuição em um artifact por
-   sistema.
+7. constrói e verifica a árvore instalada e o ZIP canônico do spike;
+8. extrai e executa o ZIP a partir de CWD externo, primeiro em Java 21 e depois
+   em Java 25, com Xvfb no Linux e `-XstartOnFirstThread` no macOS;
+9. valida as três capturas de viewport, o backend OpenAL Soft `null`, lifecycle,
+   input, assets, Tiled, descarte e hashes SHA-256;
+10. publica relatórios e o pacote com suas evidências em artifacts separados
+    por sistema.
 
 O workflow chama exclusivamente `gradlew`/`gradlew.bat`. Ele não chama `javac`,
 não enumera fontes e não usa `build.sh`, `build.bat` ou scripts manuais como
@@ -34,10 +39,10 @@ entrada alternativa.
 
 Os testes JUnit e gates de integração do build permanecem em `clean test`. O
 smoke de compatibilidade de runtime fica no task separado
-`java25CompatibilityTest`, com timeout próprio. O smoke gráfico
-`legacyDemoSmoke` não é gate inicial: ele depende de display e permanece
-separado até existir uma estratégia nativa estável por sistema, conforme a
-exclusão de golden instável da Issue #12.
+`java25CompatibilityTest`, com timeout próprio. O gate gráfico da Issue #14 é
+`smokeSpikeDistribution`: ele executa o pacote real, gera o manifesto de
+evidências e não usa o classpath de desenvolvimento do Gradle. O
+`legacyDemoSmoke` continua disponível apenas para o backend Java2D transitório.
 
 ## Relatórios
 
@@ -53,8 +58,16 @@ por 14 dias. Quando a suíte chega à publicação, ele contém:
 - `build/reports/jars/**` para a inspeção dos artifacts;
 - `**/build/reports/api/**` para assinatura atual e fronteiras públicas.
 
-`if-no-files-found: warn` preserva a falha original quando uma quebra ocorre
-antes da geração dos relatórios, sem mascará-la com uma segunda falha de upload.
+O artifact `spike-distribution-and-evidence-<SO>` contém:
+
+- `desktop/build/distributions/**`, com o ZIP canônico;
+- `desktop/build/reports/spike/**`, com evidências Java 21/25 e manifestos
+  SHA-256;
+- `build/reports/distribution/**`, com a inspeção estrutural do pacote.
+
+`if-no-files-found: error` faz a ausência de qualquer conjunto obrigatório de
+evidências falhar explicitamente, inclusive quando uma etapa anterior termina
+antes de produzi-lo.
 
 ## Cache seguro e evidência de hit/miss
 
@@ -102,8 +115,8 @@ uma nova execução verde dos três checks.
 
 ## Rollback
 
-Reverter `build.yml`, este documento e o task
-`java25CompatibilityTest` remove a CI e o smoke adicional sem alterar código de
-produção. Em uma emergência de infraestrutura, não remova silenciosamente um
-required check: registre a indisponibilidade, obtenha aprovação do
+Reverter `build.yml`, este documento, `java25CompatibilityTest` e os aliases do
+spike remove a CI e os smokes adicionais sem alterar o backend Java2D legado.
+Em uma emergência de infraestrutura, não remova silenciosamente um required
+check: registre a indisponibilidade, obtenha aprovação do
 `technical_coordinator` e ajuste a proteção e este contrato na mesma mudança.

@@ -1,0 +1,16 @@
+# Original Engine Lite Issue #14 probe sprite.
+# Author/owner: Balehlah / Engine Lite contributors.
+# SPDX-License-Identifier: Apache-2.0
+palette . 00000000
+palette B 284b63ff
+palette Y ffb703ff
+palette W f8f9faff
+pixels
+..BBBB..
+.BYYYYB.
+BYYWWYYB
+BYWWWWYB
+BYYYYYYB
+.BYBBYB.
+..B..B..
+........

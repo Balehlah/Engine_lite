@@ -68,12 +68,19 @@ do consumidor.
 `inspectJars` valida os cinco artifacts atuais:
 
 - `engine:core` é o único que contém `engine.api.*`;
-- `engine:gdx` continua vazio até a Issue #14;
-- o JAR principal de `desktop` continua vazio e o classifier `legacy` não
-  duplica a API estável;
+- `engine:gdx` contém somente a implementação `engine.incubator.gdx.spike` e
+  os recursos internos do spike da Issue #14;
+- o JAR principal de `desktop` contém somente o launcher incubador LWJGL3 e o
+  classifier `legacy` não duplica a API estável;
 - `game` não empacota classes `engine.*`;
 - todos carregam `Implementation-Version`, `LICENSE`,
   `THIRD_PARTY_NOTICES.md` e `ASSET_ATTRIBUTION.md` em `META-INF`.
 
+libGDX e LWJGL3 são dependências de implementação do spike e não aparecem em
+assinaturas de `engine.api.*`; portanto, a experiência não amplia a superfície
+SemVer nem o classpath contratual de `engine:core`.
+
 O task raiz `verifyDistribution` agrega baseline, fronteiras, licenças, assets e
-JARs. Ele faz parte de `clean test`, o gate executado pela CI desktop.
+JARs e também inspeciona o ZIP, o backend, os natives e os textos completos de
+licença distribuídos. Ele faz parte de `clean test`, o gate executado pela CI
+desktop.

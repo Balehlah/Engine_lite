@@ -7,7 +7,28 @@ truth and is checked against `gradle/dependency-licenses.txt`.
 
 ## Runtime distribution
 
-Engine Lite currently has no third-party production runtime dependency.
+The Issue #14 desktop spike distributes the following unmodified runtime JARs
+beside Engine Lite's own JARs:
+
+| Components | Purpose | License | Origin |
+|---|---|---|---|
+| libGDX core, LWJGL3 backend and desktop natives | Cross-platform application, graphics, input, audio and asset APIs | Apache License 2.0 | <https://github.com/libgdx/libgdx> |
+| gdx-jnigen-loader | Extraction and loading of libGDX native libraries | Apache License 2.0 | <https://github.com/libgdx/gdx-jnigen> |
+| LWJGL core and bindings | JVM bindings and native desktop runtime | BSD 3-Clause | <https://github.com/LWJGL/lwjgl3/tree/3.4.1> |
+| GLFW native bundled by LWJGL | Window, context and input integration | Zlib | <https://github.com/glfw/glfw/tree/3.4> |
+| jemalloc native bundled by LWJGL | Native memory allocation | BSD 2-Clause | <https://github.com/jemalloc/jemalloc/tree/5.3.0> |
+| OpenAL Soft native bundled by LWJGL | Desktop audio implementation | GNU Library General Public License 2.0 or later | <https://github.com/kcat/openal-soft/tree/1.25.1> |
+| stb native bundled by LWJGL | Image and font utility bindings | MIT or public domain | <https://github.com/LWJGL/lwjgl3/tree/3.4.1/modules/lwjgl/stb> |
+| JLayer for libGDX | MP3 decoder required while the LWJGL3 audio backend initializes | GNU Lesser General Public License 2.1 | <https://github.com/libgdx/jlayer-gdx> |
+| JOrbis | Ogg/Vorbis decoder required while the LWJGL3 audio backend initializes | GNU Library General Public License 2.0 or later | <https://www.jcraft.com/jorbis/> |
+
+The ZIP includes the complete license texts and pinned provenance record under
+`third_party/`. LWJGL's own `LICENSE.md` is the BSD 3-Clause text for LWJGL; it
+is not used as a substitute for the separately licensed native components.
+
+JLayer and JOrbis remain separate, unmodified JARs in the distribution. The
+LWJGL3 backend resolves their decoder types while constructing its audio
+implementation, even though this spike's executable probe uses PCM WAV.
 
 ## Test dependencies
 
@@ -44,5 +65,6 @@ artifacts. The Gradle action's repository `LICENSE`, `DISTRIBUTION.md` and
 
 ## Assets
 
-No distributable third-party asset is currently present. Asset provenance is
-governed by [`assets/ATTRIBUTION.md`](assets/ATTRIBUTION.md).
+No distributable third-party asset is present. The two textual spike fixtures
+are original Engine Lite work under Apache-2.0. Their provenance is recorded in
+[`assets/ATTRIBUTION.md`](assets/ATTRIBUTION.md).

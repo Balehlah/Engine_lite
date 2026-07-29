@@ -79,12 +79,26 @@ jobs:
         timeout-minutes: 10
         run: ${{ matrix.gradle }} --no-daemon --stacktrace java25CompatibilityTest -PtestRandomSeed=${{ matrix.seed }}
 
+      - name: Build and verify packaged distribution
+        timeout-minutes: 10
+        run: ${{ matrix.gradle }} --no-daemon --stacktrace buildSpikeDistribution verifyDistribution
+
+      - name: Smoke packaged ZIP on Java 21
+        timeout-minutes: 5
+        run: ${{ matrix.gradle }} --no-daemon --stacktrace smokeSpikeDistribution -PspikeSmokeVariant=java21
+
+      - name: Smoke packaged ZIP on Java 25
+        timeout-minutes: 5
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_25_X64 }}
+        run: ${{ matrix.gradle }} --no-daemon --stacktrace smokeSpikeDistribution -PspikeSmokeVariant=java25
+
       - name: Upload JUnit and HTML reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: test-reports-${{ matrix.name }}
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
           path: |
             **/build/test-results/test/**
@@ -95,3 +109,15 @@ jobs:
             build/reports/licenses/**
             build/reports/jars/**
             **/build/reports/api/**
+
+      - name: Upload packaged spike and runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: spike-distribution-and-evidence-${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            desktop/build/distributions/*.zip
+            desktop/build/reports/spike/**
+            build/reports/distribution/**

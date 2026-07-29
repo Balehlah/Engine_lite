@@ -21,11 +21,21 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Versão central `1.0.0-SNAPSHOT` e `engine.api.EngineVersion`.
 - Baseline de assinatura para `engine.api.*`, gate de vazamentos internos,
   relatório de licenças e inspeção automatizada dos JARs.
+- Spike desktop removível com libGDX 1.14.2 e LWJGL 3.4.1, framebuffer virtual
+  320×180, escala inteira, nearest-neighbor e barras centralizadas.
+- Distribuição ZIP reproduzível, launcher multiplataforma e smoke
+  autoencerrável com evidências de lifecycle, input, assets, áudio, Tiled,
+  viewport e descarte.
 
 ### Alterado
 
-- Todos os artifacts recebem versão e notices consistentes em `META-INF`.
+- Todos os JARs próprios do Engine Lite recebem versão e notices consistentes
+  em `META-INF`.
 - `clean test` também valida distribuição, API, dependências e assets.
+- A CI desktop passa a construir e executar o ZIP do spike em Java 21 e 25 nos
+  runners Windows, Linux e macOS.
+- JLayer, JOrbis e os componentes nativos de LWJGL são inventariados com
+  licenças e proveniência no pacote.
 
 ### Documentação
 
@@ -35,6 +45,7 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Definido gate mensurável e fallback para o spike libGDX/LWJGL3.
 - Documentado o contrato estável, o uso de `api`/`implementation`, a atualização
   aprovada da baseline e o processo de atribuição.
+- Adicionados especificação reproduzível e registro de evidências da Issue #14.
 
 ---
 
