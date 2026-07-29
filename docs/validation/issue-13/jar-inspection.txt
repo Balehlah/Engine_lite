@@ -1,0 +1,12 @@
+Engine Lite JAR inspection
+version=1.0.0-SNAPSHOT
+engine-core=core-1.0.0-SNAPSHOT.jar; classes=6; notices=present
+engine-gdx=gdx-1.0.0-SNAPSHOT.jar; classes=0; notices=present
+desktop=desktop-1.0.0-SNAPSHOT.jar; classes=0; notices=present
+desktop-legacy=desktop-1.0.0-SNAPSHOT-legacy.jar; classes=35; notices=present
+game=game-1.0.0-SNAPSHOT.jar; classes=4; notices=present
+stable-api-owner=engine-core
+engine-gdx=empty
+desktop-main=empty
+desktop-legacy=no-stable-api-duplication
+game=no-engine-classes

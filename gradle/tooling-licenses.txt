@@ -1,0 +1,7 @@
+# Kind | coordinates | version | SPDX/license | license URL | source URL | usage
+wrapper|gradle-wrapper|9.6.1|Apache-2.0|https://www.apache.org/licenses/LICENSE-2.0|https://github.com/gradle/gradle|build
+workflow|actions/checkout|v6|MIT|https://github.com/actions/checkout/blob/main/LICENSE|https://github.com/actions/checkout|ci
+workflow|actions/setup-java|v5|MIT|https://github.com/actions/setup-java/blob/main/LICENSE|https://github.com/actions/setup-java|ci
+workflow|gradle/actions/setup-gradle|v6|MIT plus separately licensed vendor caching component|https://github.com/gradle/actions/blob/main/LICENSE|https://github.com/gradle/actions|ci
+workflow|actions/upload-artifact|v7|MIT|https://github.com/actions/upload-artifact/blob/main/LICENSE|https://github.com/actions/upload-artifact|ci
+toolchain|eclipse-temurin|21 and 25|GPL-2.0-only WITH Classpath-exception-2.0|https://openjdk.org/legal/gplv2+ce.html|https://adoptium.net/temurin/|build-and-ci

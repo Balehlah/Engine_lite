@@ -1,0 +1,13 @@
+{
+  "checked_at_utc": "2026-07-29T04:11:38Z",
+  "branch": "codex/issue-13-license-semver-api-baseline",
+  "remote_file_url": "https://github.com/Balehlah/Engine_lite/blob/codex/issue-13-license-semver-api-baseline/LICENSE",
+  "github_license_api_url": "https://api.github.com/licenses/apache-2.0",
+  "github_license_key": "apache-2.0",
+  "github_license_name": "Apache License 2.0",
+  "github_spdx_id": "Apache-2.0",
+  "normalized_sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+  "canonical_sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+  "exact_normalized_match": true,
+  "ui_observation": "The GitHub branch Code page exposes the root LICENSE file through its License navigation."
+}

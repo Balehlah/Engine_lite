@@ -8,6 +8,11 @@ O código atual é um protótipo pré-1.0 baseado em Java2D. O produto é o moto
 `game.test` é apenas uma demo consumidora. A futura versão 1.0.0 será a primeira
 release pública com contrato SemVer e API estável auditada.
 
+A versão de desenvolvimento é `1.0.0-SNAPSHOT`. Somente `engine.api.*` é
+protegido pela baseline; todos os demais pacotes públicos atuais continuam
+protótipo, internos, incubadores ou demo conforme
+[docs/public-api.md](docs/public-api.md).
+
 As decisões de fundação estão em
 [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md), o plano de execução em
 [ROADMAP.md](ROADMAP.md) e a auditoria do protótipo em
@@ -112,6 +117,7 @@ No Windows:
 ```batch
 gradlew.bat clean test
 gradlew.bat projects
+gradlew.bat verifyDistribution
 ```
 
 No Linux/macOS:
@@ -119,6 +125,7 @@ No Linux/macOS:
 ```bash
 ./gradlew clean test
 ./gradlew projects
+./gradlew verifyDistribution
 ```
 
 `build.bat` e `build.sh` continuam como aliases de compatibilidade para
@@ -148,6 +155,11 @@ legado.
 - `desktop`: backend Java2D atual no source set transitório `legacy`;
 - `game`: demo consumidora e seu ponto de entrada;
 - raiz: somente agregação; não produz JAR monolítico.
+
+`clean test` também verifica a baseline de API, dependências/licenças,
+atribuição de assets e o conteúdo dos JARs. Os relatórios são gerados em
+`build/reports/licenses`, `build/reports/jars` e
+`engine/core/build/reports/api`.
 
 ### Controles do Demo
 
@@ -209,8 +221,10 @@ public class MeuJogo extends Game {
 - Implementação interna: `engine.internal.*`.
 - APIs experimentais: `engine.incubator.*`.
 
-Os pacotes atuais em `engine.*` continuam sendo protótipo até a classificação da
-Issue #13. Consulte [docs/versioning.md](docs/versioning.md).
+Os pacotes atuais fora de `engine.api.*` continuam sendo protótipo legado,
+internos ou incubadores e não integram a baseline. Consulte
+[docs/versioning.md](docs/versioning.md) e
+[docs/public-api.md](docs/public-api.md).
 
 ### Fluxo Principal
 
@@ -273,7 +287,10 @@ ColorPalette.CGA
 
 ## 📄 Licença
 
-A licença Apache-2.0 foi aprovada para o código na
-[ADR-004](docs/adr/ADR-004-license-and-assets.md). O arquivo `LICENSE`, notices e
-inventário de assets serão materializados pela Issue #13; até lá, o protótipo
-não deve ser tratado como uma release licenciada.
+O código é distribuído sob
+[Apache License 2.0](LICENSE), conforme a
+[ADR-004](docs/adr/ADR-004-license-and-assets.md). Dependências e ferramentas
+estão inventariadas em
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); assets só podem ser
+distribuídos quando registrados em
+[assets/ATTRIBUTION.md](assets/ATTRIBUTION.md).

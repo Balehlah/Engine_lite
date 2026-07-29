@@ -15,12 +15,26 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 
 ## [Unreleased]
 
+### Adicionado
+
+- Licença Apache-2.0, notices de terceiros e inventário obrigatório de assets.
+- Versão central `1.0.0-SNAPSHOT` e `engine.api.EngineVersion`.
+- Baseline de assinatura para `engine.api.*`, gate de vazamentos internos,
+  relatório de licenças e inspeção automatizada dos JARs.
+
+### Alterado
+
+- Todos os artifacts recebem versão e notices consistentes em `META-INF`.
+- `clean test` também valida distribuição, API, dependências e assets.
+
 ### Documentação
 
 - Registradas as decisões de produto, plataformas, Java, licença, API,
   viewport e backend da Issue #9.
 - Adicionados ADRs, auditoria de fundação, roadmap e política de versionamento.
 - Definido gate mensurável e fallback para o spike libGDX/LWJGL3.
+- Documentado o contrato estável, o uso de `api`/`implementation`, a atualização
+  aprovada da baseline e o processo de atribuição.
 
 ---
 
@@ -216,4 +230,3 @@ src/engine/
 - [ ] Sistema de navegacao (pathfinding)
 - [ ] Suporte a gamepad
 - [ ] Sistema de UI
-

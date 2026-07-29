@@ -1,0 +1,160 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+> Task :desktop:clean
+> Task :engine:clean
+> Task :game:clean
+> Task :engine:core:clean UP-TO-DATE
+> Task :engine:gdx:clean UP-TO-DATE
+> Task :clean
+
+> Task :generateDependencyLicenseReport
+Recorded 9 resolved modules and 6 tooling entries in ..\..\..\..\..\..\tmp\engine-lite-issue13-final\root\reports\licenses\dependencies.csv.
+
+> Task :desktop:compileJava NO-SOURCE
+> Task :desktop:processResources NO-SOURCE
+> Task :desktop:classes UP-TO-DATE
+> Task :desktop:jar
+> Task :engine:core:compileJava
+> Task :desktop:compileLegacyJava
+> Task :desktop:processLegacyResources NO-SOURCE
+> Task :desktop:legacyClasses
+> Task :desktop:legacyJar
+> Task :game:compileJava
+> Task :game:processResources NO-SOURCE
+> Task :game:classes
+> Task :game:jar
+> Task :engine:core:processResources NO-SOURCE
+> Task :engine:core:classes
+> Task :engine:core:jar
+> Task :engine:gdx:compileJava NO-SOURCE
+> Task :engine:gdx:processResources NO-SOURCE
+> Task :engine:gdx:classes UP-TO-DATE
+> Task :engine:gdx:jar
+
+> Task :inspectJars
+Inspected 5 JARs; report: ..\..\..\..\..\..\tmp\engine-lite-issue13-final\root\reports\jars\inspection.txt.
+
+> Task :verifyAssetAttribution
+Verified asset attribution for 0 distributable assets.
+
+> Task :engine:core:verifyPublicApiBoundaries
+Verified public API boundaries; report: ..\..\..\..\..\..\tmp\engine-lite-issue13-final\engine\core\reports\api\boundaries.txt
+
+> Task :engine:core:apiCheck
+Verified stable API against gradle/public-api-baseline.txt.
+
+> Task :verifyDistribution
+> Task :desktop:compileTestJava
+> Task :desktop:processTestResources NO-SOURCE
+> Task :desktop:testClasses
+
+> Task :desktop:test
+JUnit random seed for :desktop:test: 1313
+
+RaycastCharacterizationTest > missAfterHitMustClearThePreviousResult() SKIPPED
+
+RaycastCharacterizationTest > zeroDirectionMustFailWithoutProducingNaN() SKIPPED
+
+RaycastCharacterizationTest > missAfterHitRetainsEveryFieldFromThePreviousHit() PASSED
+
+RaycastCharacterizationTest > zeroDirectionCircleQueryReportsAHitContainingNaN() PASSED
+
+AabbCollisionBaselineTest > overlapReturnsTheMinimumTranslationVector() PASSED
+
+AabbCollisionBaselineTest > nonIntersectingMtvContainsNegativeZeroAndIsNotVectorZero() PASSED
+
+AabbCollisionBaselineTest > constructorMustRejectNaNAndNegativeDimensions() SKIPPED
+
+AabbCollisionBaselineTest > nonIntersectingMtvMustEqualVectorZero() SKIPPED
+
+AabbCollisionBaselineTest > zeroVelocitySweepOfOverlappingBoxesReturnsNaN() PASSED
+
+AabbCollisionBaselineTest > touchingEdgesDoNotCountAsIntersection() PASSED
+
+AabbCollisionBaselineTest > constructorAcceptsNaNAndNegativeDimensions() PASSED
+
+AabbCollisionBaselineTest > zeroVelocitySweepMustReturnAFiniteResult() SKIPPED
+
+SceneSerializerBaselineTest > invalidNumericValueEscapesAsNumberFormatException() PASSED
+
+SceneSerializerBaselineTest > sceneRoundTripOverwritesSceneNameAndDropsEntityName() PASSED
+
+SceneSerializerBaselineTest > invalidHeaderIsIgnoredAndItsEntitiesAreAccepted() PASSED
+
+SceneSerializerBaselineTest > sceneRoundTripMustPreserveSceneAndEntityNames() SKIPPED
+
+SceneSerializerBaselineTest > invalidHeaderMustBeRejected() SKIPPED
+
+TilemapCoordinateCharacterizationTest > positiveWorldCoordinatesRespectTileBoundaries() PASSED
+
+TilemapCoordinateCharacterizationTest > negativeWorldCoordinateIsTruncatedIntoTileZero() PASSED
+
+TilemapCoordinateCharacterizationTest > negativeWorldCoordinateMustMapOutsideTheTilemap() SKIPPED
+
+InputGlobalStateIsolationTest > singletonStartsWithoutHeldOrTransientState() PASSED
+
+InputGlobalStateIsolationTest > clearRemovesHeldAndQueuedState() PASSED
+
+AnimationCharacterizationTest > oneFramePingPongMovesToNegativeFrameAndBreaksSpriteAccess() PASSED
+
+AnimationCharacterizationTest > oneFramePingPongMustAlwaysRemainOnFrameZero() SKIPPED
+
+InputCharacterizationTest > quickMousePressAndReleaseMustBothSurviveForOneTick() SKIPPED
+
+InputCharacterizationTest > mouseMovementBeforeUpdateMustBeVisibleForOneTick() SKIPPED
+
+InputCharacterizationTest > quickKeyboardPressAndReleaseDisappearAtTheDocumentedUpdateBoundary() PASSED
+
+InputCharacterizationTest > mouseMovementBeforeUpdateIsCollapsedToZeroDelta() PASSED
+
+InputCharacterizationTest > scrollAccumulatesUntilUpdateAndLastsExactlyOneTick() PASSED
+
+InputCharacterizationTest > quickMousePressAndReleaseDisappearAtTheDocumentedUpdateBoundary() PASSED
+
+InputCharacterizationTest > quickKeyboardPressAndReleaseMustBothSurviveForOneTick() SKIPPED
+
+> Task :engine:core:compileTestJava
+> Task :engine:core:processTestResources NO-SOURCE
+> Task :engine:core:testClasses
+
+> Task :engine:core:verifyBackendIndependence
+Verified engine:core boundary across 6 source files.
+
+> Task :engine:core:test
+JUnit random seed for :engine:core:test: 1313
+
+EngineVersionTest > reportsDevelopmentWhenRunningFromClasses() PASSED
+
+Vector2SpecificationTest > arithmeticReturnsNewValuesWithoutMutatingTheOperands() PASSED
+
+Vector2SpecificationTest > divisionByZeroIsRejected() PASSED
+
+Vector2SpecificationTest > normalizationPreservesDirectionAndProducesUnitLength() PASSED
+
+> Task :verifyJUnitReports
+Verified JUnit XML and HTML reports for engine:core and desktop.
+
+> Task :verifyLegacyClassParity
+Verified legacy parity: 37 sources -> 44 classes.
+
+> Task :verifyNoBinInput
+Verified: no Gradle source set reads bin/.
+
+> Task :verifyRootDoesNotPublishJar
+Verified: the root project has no jar task.
+
+> Task :game:compileTestJava NO-SOURCE
+> Task :game:processTestResources NO-SOURCE
+> Task :game:testClasses UP-TO-DATE
+> Task :game:test NO-SOURCE
+> Task :engine:gdx:compileTestJava NO-SOURCE
+> Task :engine:gdx:processTestResources NO-SOURCE
+> Task :engine:gdx:testClasses UP-TO-DATE
+> Task :engine:gdx:test NO-SOURCE
+> Task :test
+> Task :aggregateTestReport
+
+BUILD SUCCESSFUL in 41s
+29 actionable tasks: 27 executed, 2 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.6.1/userguide/configuration_cache_enabling.html
+FINAL_EXIT_CODE=0

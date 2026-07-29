@@ -1,0 +1,3 @@
+# Dependencies intentionally exposed through engine:core's Gradle `api`
+# configuration. Use `group:name` for modules and `project::path` for projects.
+# The stable API currently exposes no dependency.

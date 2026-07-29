@@ -1,0 +1,4 @@
+stable-package=engine.api.*
+signature-dependencies=java.lang.Object@java.base,java.lang.String@java.base
+gradle-api-dependencies=<none>
+internal-or-prototype-leaks=none
