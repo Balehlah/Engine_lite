@@ -1,0 +1,8 @@
+# Engine Lite public API baseline
+# JDK 21 javap -protected -s; update only with coordinator approval.
+
+## engine.api.EngineVersion
+public final class engine.api.EngineVersion {
+  public static java.lang.String current();
+    descriptor: ()Ljava/lang/String;
+}

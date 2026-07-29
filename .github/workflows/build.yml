@@ -92,3 +92,6 @@ jobs:
             **/build/test-results/java25CompatibilityTest/**
             **/build/reports/tests/java25CompatibilityTest/**
             build/reports/tests/aggregate/**
+            build/reports/licenses/**
+            build/reports/jars/**
+            **/build/reports/api/**

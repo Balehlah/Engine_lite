@@ -1,8 +1,8 @@
 # Política de versionamento e compatibilidade
 
 Esta política deriva da
-[ADR-003](adr/ADR-003-versioning-and-public-api.md) e será automatizada pela
-[Issue #13](https://github.com/Balehlah/Engine_lite/issues/13).
+[ADR-003](adr/ADR-003-versioning-and-public-api.md) e é automatizada pelos gates
+da [Issue #13](https://github.com/Balehlah/Engine_lite/issues/13).
 
 ## Linha de versões
 
@@ -14,6 +14,9 @@ Esta política deriva da
   semanticamente a futura `v1.0.0`.
 - O primeiro RC congela a baseline da API estável; antes dele, nenhuma API do
   protótipo é prometida como estável.
+- A versão de desenvolvimento está centralizada como `1.0.0-SNAPSHOT` na
+  propriedade `engineVersion` de `gradle.properties`; manifestos de todos os
+  JARs recebem o mesmo `Implementation-Version`.
 
 ## Classificação normativa de pacotes
 
@@ -22,11 +25,15 @@ Esta política deriva da
 | Estável | `engine.api.*` | Compatibilidade de fonte e binária durante a linha 1.x; quebra exige major |
 | Interno | `engine.internal.*` | Sem garantia; não pode aparecer em assinaturas estáveis nem vazar transitivamente |
 | Incubador | `engine.incubator.*` | Experimental; pode mudar em minor com changelog e guia de migração |
-| Protótipo legado | Pacotes atuais `engine.core`, `engine.display`, `engine.graphics`, `engine.input`, `engine.assets`, `engine.audio`, `engine.tilemap`, `engine.physics`, `engine.io`, `engine.math` e `engine.util` | Nenhuma estabilidade até classificação explícita pela Issue #13 |
+| Protótipo legado | Pacotes atuais `engine.core`, `engine.display`, `engine.graphics`, `engine.input`, `engine.assets`, `engine.audio`, `engine.tilemap`, `engine.physics`, `engine.io`, `engine.math` e `engine.util` | Nenhuma estabilidade; a Issue #13 deliberadamente não os promoveu |
 | Demo | `game.test` | Fora da API do motor |
 
 Tipos Java `public` fora de `engine.api.*` não são automaticamente parte da API
 estável.
+
+A superfície e o procedimento de mudança estão detalhados em
+[public-api.md](public-api.md). A baseline textual versionada fica em
+[`gradle/public-api-baseline.txt`](../gradle/public-api-baseline.txt).
 
 ## Compatibilidade e depreciação
 
@@ -39,6 +46,9 @@ estável.
   baseline.
 - Código interno não pode fazer parte de parâmetros, retornos, heranças,
   exceções declaradas ou dependências transitivas da API estável.
+- Dependências de implementação usam `implementation`; qualquer dependência
+  deliberadamente exposta com `api` exige aprovação e registro em
+  `gradle/public-api-dependencies.txt`.
 
 ## Changelog e tags
 
@@ -49,6 +59,9 @@ Cada release pública deve:
 3. passar a checagem de baseline da API;
 4. produzir tag anotada no formato definido;
 5. apontar para artifacts e relatório de licenças.
+
+Os gates locais correspondentes são `:engine:core:apiCheck`,
+`verifyDistribution` e `generateDependencyLicenseReport`.
 
 ## Responsabilidade e revisão
 

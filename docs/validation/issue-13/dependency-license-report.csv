@@ -1,0 +1,16 @@
+kind,coordinates,version,license,license_url,source_url,usage
+module,org.junit:junit-bom,5.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.junit.jupiter:junit-jupiter,5.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.junit.jupiter:junit-jupiter-api,5.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.junit.jupiter:junit-jupiter-engine,5.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.junit.jupiter:junit-jupiter-params,5.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.junit.platform:junit-platform-commons,1.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.junit.platform:junit-platform-engine,1.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.junit.platform:junit-platform-launcher,1.14.4,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/junit-team/junit5,test
+module,org.opentest4j:opentest4j,1.3.0,EPL-2.0,https://www.eclipse.org/legal/epl-2.0/,https://github.com/ota4j-team/opentest4j,test
+wrapper,gradle-wrapper,9.6.1,Apache-2.0,https://www.apache.org/licenses/LICENSE-2.0,https://github.com/gradle/gradle,build
+workflow,actions/checkout,v6,MIT,https://github.com/actions/checkout/blob/main/LICENSE,https://github.com/actions/checkout,ci
+workflow,actions/setup-java,v5,MIT,https://github.com/actions/setup-java/blob/main/LICENSE,https://github.com/actions/setup-java,ci
+workflow,gradle/actions/setup-gradle,v6,MIT plus separately licensed vendor caching component,https://github.com/gradle/actions/blob/main/LICENSE,https://github.com/gradle/actions,ci
+workflow,actions/upload-artifact,v7,MIT,https://github.com/actions/upload-artifact/blob/main/LICENSE,https://github.com/actions/upload-artifact,ci
+toolchain,eclipse-temurin,21 and 25,GPL-2.0-only WITH Classpath-exception-2.0,https://openjdk.org/legal/gplv2+ce.html,https://adoptium.net/temurin/,build-and-ci

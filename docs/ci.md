@@ -23,7 +23,10 @@ Cada check:
 4. executa `clean test` com Java 21 e uma seed própria;
 5. executa `java25CompatibilityTest`, que mantém o bytecode em Java 21 e inicia
    os testes em Java 25;
-6. publica XML JUnit e HTML dos dois runtimes em um artifact por sistema.
+6. valida baseline/API, licenças, assets e conteúdo dos JARs como parte de
+   `clean test`;
+7. publica XML JUnit, HTML e os relatórios de distribuição em um artifact por
+   sistema.
 
 O workflow chama exclusivamente `gradlew`/`gradlew.bat`. Ele não chama `javac`,
 não enumera fontes e não usa `build.sh`, `build.bat` ou scripts manuais como
@@ -45,7 +48,10 @@ por 14 dias. Quando a suíte chega à publicação, ele contém:
   21;
 - `**/build/test-results/java25CompatibilityTest/**` e
   `**/build/reports/tests/java25CompatibilityTest/**` para Java 25;
-- `build/reports/tests/aggregate/**` para a visão agregada da baseline.
+- `build/reports/tests/aggregate/**` para a visão agregada da baseline;
+- `build/reports/licenses/**` para dependências e ferramentas resolvidas;
+- `build/reports/jars/**` para a inspeção dos artifacts;
+- `**/build/reports/api/**` para assinatura atual e fronteiras públicas.
 
 `if-no-files-found: warn` preserva a falha original quando uma quebra ocorre
 antes da geração dos relatórios, sem mascará-la com uma segunda falha de upload.

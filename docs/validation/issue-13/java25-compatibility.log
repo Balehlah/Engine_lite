@@ -1,0 +1,120 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+> Task :engine:core:compileJava
+> Task :desktop:compileLegacyJava
+> Task :desktop:processLegacyResources NO-SOURCE
+> Task :desktop:legacyClasses
+> Task :desktop:legacyJar
+> Task :desktop:compileJava NO-SOURCE
+> Task :desktop:processResources NO-SOURCE
+> Task :desktop:classes UP-TO-DATE
+> Task :desktop:compileTestJava
+> Task :desktop:processTestResources NO-SOURCE
+> Task :desktop:testClasses
+> Task :engine:core:processResources NO-SOURCE
+> Task :engine:core:classes
+> Task :engine:core:jar
+
+> Task :desktop:java25CompatibilityTest
+JUnit random seed for :desktop:java25CompatibilityTest: 1325
+
+InputGlobalStateIsolationTest > singletonStartsWithoutHeldOrTransientState() PASSED
+
+InputGlobalStateIsolationTest > clearRemovesHeldAndQueuedState() PASSED
+
+InputCharacterizationTest > scrollAccumulatesUntilUpdateAndLastsExactlyOneTick() PASSED
+
+InputCharacterizationTest > quickKeyboardPressAndReleaseMustBothSurviveForOneTick() SKIPPED
+
+InputCharacterizationTest > mouseMovementBeforeUpdateMustBeVisibleForOneTick() SKIPPED
+
+InputCharacterizationTest > mouseMovementBeforeUpdateIsCollapsedToZeroDelta() PASSED
+
+InputCharacterizationTest > quickMousePressAndReleaseDisappearAtTheDocumentedUpdateBoundary() PASSED
+
+InputCharacterizationTest > quickMousePressAndReleaseMustBothSurviveForOneTick() SKIPPED
+
+InputCharacterizationTest > quickKeyboardPressAndReleaseDisappearAtTheDocumentedUpdateBoundary() PASSED
+
+AabbCollisionBaselineTest > overlapReturnsTheMinimumTranslationVector() PASSED
+
+AabbCollisionBaselineTest > constructorMustRejectNaNAndNegativeDimensions() SKIPPED
+
+AabbCollisionBaselineTest > nonIntersectingMtvContainsNegativeZeroAndIsNotVectorZero() PASSED
+
+AabbCollisionBaselineTest > zeroVelocitySweepOfOverlappingBoxesReturnsNaN() PASSED
+
+AabbCollisionBaselineTest > constructorAcceptsNaNAndNegativeDimensions() PASSED
+
+AabbCollisionBaselineTest > nonIntersectingMtvMustEqualVectorZero() SKIPPED
+
+AabbCollisionBaselineTest > touchingEdgesDoNotCountAsIntersection() PASSED
+
+AabbCollisionBaselineTest > zeroVelocitySweepMustReturnAFiniteResult() SKIPPED
+
+TilemapCoordinateCharacterizationTest > negativeWorldCoordinateMustMapOutsideTheTilemap() SKIPPED
+
+TilemapCoordinateCharacterizationTest > positiveWorldCoordinatesRespectTileBoundaries() PASSED
+
+TilemapCoordinateCharacterizationTest > negativeWorldCoordinateIsTruncatedIntoTileZero() PASSED
+
+AnimationCharacterizationTest > oneFramePingPongMovesToNegativeFrameAndBreaksSpriteAccess() PASSED
+
+AnimationCharacterizationTest > oneFramePingPongMustAlwaysRemainOnFrameZero() SKIPPED
+
+RaycastCharacterizationTest > missAfterHitMustClearThePreviousResult() SKIPPED
+
+RaycastCharacterizationTest > missAfterHitRetainsEveryFieldFromThePreviousHit() PASSED
+
+RaycastCharacterizationTest > zeroDirectionMustFailWithoutProducingNaN() SKIPPED
+
+RaycastCharacterizationTest > zeroDirectionCircleQueryReportsAHitContainingNaN() PASSED
+
+SceneSerializerBaselineTest > invalidHeaderMustBeRejected() SKIPPED
+
+SceneSerializerBaselineTest > invalidNumericValueEscapesAsNumberFormatException() PASSED
+
+SceneSerializerBaselineTest > sceneRoundTripMustPreserveSceneAndEntityNames() SKIPPED
+
+SceneSerializerBaselineTest > invalidHeaderIsIgnoredAndItsEntitiesAreAccepted() PASSED
+
+SceneSerializerBaselineTest > sceneRoundTripOverwritesSceneNameAndDropsEntityName() PASSED
+
+> Task :engine:core:compileTestJava
+> Task :engine:core:processTestResources NO-SOURCE
+> Task :engine:core:testClasses
+
+> Task :engine:core:java25CompatibilityTest
+JUnit random seed for :engine:core:java25CompatibilityTest: 1325
+
+EngineVersionTest > reportsDevelopmentWhenRunningFromClasses() PASSED
+
+Vector2SpecificationTest > normalizationPreservesDirectionAndProducesUnitLength() PASSED
+
+Vector2SpecificationTest > arithmeticReturnsNewValuesWithoutMutatingTheOperands() PASSED
+
+Vector2SpecificationTest > divisionByZeroIsRejected() PASSED
+
+> Task :verifyJava25Reports
+Verified Java 25 JUnit XML and HTML reports for engine:core and desktop.
+
+> Task :game:compileJava
+> Task :game:processResources NO-SOURCE
+> Task :game:classes
+> Task :game:compileTestJava NO-SOURCE
+> Task :game:processTestResources NO-SOURCE
+> Task :game:testClasses UP-TO-DATE
+> Task :game:java25CompatibilityTest NO-SOURCE
+> Task :engine:gdx:compileJava NO-SOURCE
+> Task :engine:gdx:processResources NO-SOURCE
+> Task :engine:gdx:classes UP-TO-DATE
+> Task :engine:gdx:compileTestJava NO-SOURCE
+> Task :engine:gdx:processTestResources NO-SOURCE
+> Task :engine:gdx:testClasses UP-TO-DATE
+> Task :engine:gdx:java25CompatibilityTest NO-SOURCE
+> Task :java25CompatibilityTest
+
+BUILD SUCCESSFUL in 35s
+10 actionable tasks: 10 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.6.1/userguide/configuration_cache_enabling.html
+FINAL_EXIT_CODE=0
