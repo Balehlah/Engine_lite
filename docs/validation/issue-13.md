@@ -10,9 +10,10 @@
 
 ## Critérios de aceite
 
-- [ ] **GitHub identifica a licença.** O `LICENSE` raiz contém o texto padrão
-  Apache License 2.0. A confirmação pelo endpoint de licença do GitHub depende
-  de publicar esta branch; registrar aqui o resultado remoto antes da revisão.
+- [x] **GitHub identifica a licença.** Na branch remota, o GitHub expõe o
+  `LICENSE` raiz pela navegação `License`. O conteúdo publicado corresponde
+  exatamente ao texto `Apache-2.0` retornado pela API canônica de licenças do
+  GitHub, com o mesmo SHA-256 após normalização de quebras de linha.
 - [x] **Dependências e assets têm origem/licença.**
   `generateDependencyLicenseReport` resolveu 9 módulos, validou 6 entradas de
   tooling/CI e falha se os catálogos divergirem. `verifyAssetAttribution`
@@ -29,6 +30,7 @@
 
 | Evidência | Resultado | Arquivo |
 |---|---|---|
+| Identificação da licença | `Apache-2.0`; conteúdo remoto idêntico ao canônico do GitHub | [github-license-detection.json](issue-13/github-license-detection.json) |
 | Relatório de licenças | 9 módulos resolvidos; Wrapper, toolchain e 4 Actions registrados | [dependency-license-report.csv](issue-13/dependency-license-report.csv) |
 | Falha controlada da baseline | Renome de `current()` rejeitado; exit code 1 | [controlled-api-break.log](issue-13/controlled-api-break.log) |
 | Fronteira da API | Somente tipos do JDK; nenhuma dependência `api` | [api-boundaries.txt](issue-13/api-boundaries.txt) |
@@ -73,16 +75,20 @@ gradlew.bat --no-daemon --console=plain --rerun-tasks \
 git diff --check
 ```
 
-## Validação remota ainda necessária
+## Validação remota
 
-Antes da revisão final:
-
-1. publicar a branch sem fazer merge;
-2. confirmar `Apache-2.0` pelo endpoint de licença do GitHub e anexar a
-   resposta;
-3. exigir os checks Ubuntu, Windows e macOS verdes;
-4. vincular a PR e as evidências na Issue #13;
-5. solicitar revisão de `technical-coordinator` e `qa_validator`.
+- PR: [#58](https://github.com/Balehlah/Engine_lite/pull/58), publicada sem
+  merge na `main`.
+- CI inicial:
+  [run 30421278941](https://github.com/Balehlah/Engine_lite/actions/runs/30421278941),
+  concluído com sucesso em Ubuntu, Windows e macOS; em cada sistema passaram
+  `clean test` no Java 21 e o smoke de compatibilidade no Java 25.
+- Licença: o arquivo remoto e o texto canônico `apache-2.0` da API do GitHub
+  produziram o SHA-256 normalizado
+  `43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1`.
+- A detecção no cabeçalho da página padrão do repositório ocorrerá quando o PR
+  for integrado, pois o endpoint de licença do repositório avalia a branch
+  padrão. Nenhum merge foi realizado, conforme a política de contribuição.
 
 ## Risco residual e rollback
 
