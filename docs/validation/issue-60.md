@@ -91,13 +91,13 @@ gradlew.bat --no-daemon --stacktrace
 
 BUILD SUCCESSFUL
 SHA-256 antes/depois:
-d78fe265302100986198586829d1f1bae7cf9ff45530992d77167a10890c0190
+40e3676528260ecdd14df18e610e17746b9478dac395b5463f1bb66d63392493
 ```
 
 Inventário verificado:
 
 ```text
-zip-bytes=13778349
+zip-bytes=13778457
 desktop-natives=curated-windows-linux
 desktop-natives-source-sha256=f4847981d27c6524a30f5665036ec8c11f48c8eda7610bb63f742de95ffe1970
 desktop-natives-curated-sha256=1f69de2db33fae4c4f3328ef6fbfffe3a85bce815326e3346362b7cee0376a4f

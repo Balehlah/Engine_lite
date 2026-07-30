@@ -14,6 +14,8 @@ import java.util.Objects;
 public final class Lwjgl3SpikeLauncher {
     private static final int INITIAL_WIDTH = 640;
     private static final int INITIAL_HEIGHT = 360;
+    private static final int MAX_SMOKE_WIDTH = 1280;
+    private static final int MAX_SMOKE_HEIGHT = 720;
 
     private Lwjgl3SpikeLauncher() {
     }
@@ -28,6 +30,14 @@ public final class Lwjgl3SpikeLauncher {
         windowConfiguration.useVsync(true);
         windowConfiguration.setForegroundFPS(60);
         windowConfiguration.setIdleFPS(60);
+        if (runConfiguration.smoke()) {
+            windowConfiguration.setWindowSizeLimits(
+                INITIAL_WIDTH,
+                INITIAL_HEIGHT,
+                MAX_SMOKE_WIDTH,
+                MAX_SMOKE_HEIGHT
+            );
+        }
 
         new Lwjgl3Application(
             new LibGdxSpikeApplication(runConfiguration),
