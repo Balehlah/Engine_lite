@@ -4,8 +4,8 @@
 - Branch: `codex/issue-14-libgdx-lwjgl3-spike`
 - Base consumida: `9de87d9`
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
-- Estado: gates locais e matriz remota concluídos; integração da Issue #60,
-  revisão independente e decisão final pendentes
+- Estado: gates locais, matriz remota e revisão independente concluídos;
+  integração da Issue #60 e decisão final pendentes
 
 ## Gate de entrada
 
@@ -33,7 +33,7 @@ checkout principal foi preservada fora desta worktree.
 - [x] logs de lifecycle, input, asset, áudio, Tiled e dispose.
 - [x] matriz Windows/Linux verde em Java 21/25.
 - [x] hashes dos artifacts locais.
-- [ ] revisão independente de `qa_validator`.
+- [x] revisão independente de `qa_validator`.
 - [ ] aprovação final de @Balehlah.
 
 ## Evidências locais
@@ -91,23 +91,23 @@ inferir compatibilidade a partir do Java 21.
 
 A implementação da #60 foi publicada na PR empilhada
 [#61](https://github.com/Balehlah/Engine_lite/pull/61). A execução
-[`30553586242`](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242)
+[`30554662980`](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980)
 aprovou os jobs
-[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188967)
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/job/90911919800)
 e
-[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188982)
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/job/90911919770)
 em Java 21/25.
 
 Cada job construiu a distribuição e iniciou o mesmo pacote instalado a partir
 de CWD externo nos dois JDKs, em vez de executar o classpath do Gradle. Os
 artifacts de distribuição/evidências estão preservados para
-[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763917439)
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764391986)
 e
-[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763980579).
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764399932).
 Os relatórios de teste estão preservados para
-[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763915942)
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764390426)
 e
-[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763979557).
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764399139).
 
 Os quatro smokes registraram lifecycle, três viewports/goldens, input, assets,
 OpenAL, Tiled e descarte exato de nove recursos. O mesmo ZIP foi produzido nos
@@ -115,6 +115,11 @@ dois runners e permaneceu intacto antes/depois de todos os smokes:
 `9f9b53677c975233ebc72ad3d4f457e670e4f05419c6f6e749eff86a193f8d15`.
 No Windows, Java 21 e 25 reportaram
 `llvmpipe (LLVM 22.1.6, 256 bits)` com Mesa 26.1.1 fixado e auditado.
+
+O `qa_validator` independente confrontou a matriz, os quatro artifacts, 14
+entradas de manifesto por smoke, estrutura interna do ZIP/JARs, notices e
+proveniência. Também repetiu o gate local completo com seed `6061`. O parecer
+foi **PASS, zero defeitos bloqueadores**.
 
 A execução histórica
 [`30476609058`](https://github.com/Balehlah/Engine_lite/actions/runs/30476609058)

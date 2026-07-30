@@ -123,20 +123,20 @@ mesa-runtime=absent
 
 - PR empilhada:
   [#61](https://github.com/Balehlah/Engine_lite/pull/61)
-- Execução verde:
-  [`30553586242`](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242)
+- Execução verde do head auditado `4ae1089`:
+  [`30554662980`](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980)
 - Jobs:
-  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188967)
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/job/90911919800)
   e
-  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188982)
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/job/90911919770)
 - Artifacts de distribuição e evidências:
-  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763917439)
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764391986)
   e
-  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763980579)
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764399932)
 - Relatórios de testes:
-  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763915942)
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764390426)
   e
-  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763979557)
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764399139)
 - SHA-256 canônico do mesmo ZIP no Ubuntu e Windows, antes e depois dos
   quatro smokes:
   `9f9b53677c975233ebc72ad3d4f457e670e4f05419c6f6e749eff86a193f8d15`.
@@ -153,6 +153,24 @@ vez. O `verifyDistribution` aprovou a allowlist exata Windows/Linux e rejeita
 qualquer payload, extensão ou flag fora do contrato, além de runtime Mesa no
 ZIP.
 
+## Revisão independente
+
+Um subagente `qa_validator`, autorizado pelo mantenedor, auditou sem alterações
+o diff completo de 28 arquivos, a Issue #60, a PR #61, a execução
+`30554662980`, seus quatro artifacts e os gates locais. A validação independente
+repetiu `clean test buildSpikeDistribution verifyDistribution
+recordSpikeDistributionHash` com seed `6061` em build root isolado e terminou
+com `BUILD SUCCESSFUL` em 41 tasks.
+
+Veredito: **PASS, zero defeitos bloqueadores**. Os 12 critérios foram
+confrontados individualmente; a aprovação do mantenedor e os gates sequenciais
+de integração permanecem separados deste aceite técnico.
+
+Em 2026-07-30, a proteção de `main` também foi consultada pela API e confirmou
+PR obrigatório, `strict=true`, aplicação a administradores, resolução de
+conversas e exatamente os contexts `Build and test (Ubuntu)` e
+`Build and test (Windows)`.
+
 ## Checklist de fechamento
 
 - [x] `clean test` local final.
@@ -160,10 +178,10 @@ ZIP.
 - [x] `buildSpikeDistribution verifyDistribution` final.
 - [x] Quatro smokes remotos do mesmo ZIP.
 - [x] Dois checks verdes.
-- [ ] Proteção de branch exige exatamente os dois checks suportados.
+- [x] Proteção de branch exige exatamente os dois checks suportados.
 - [ ] PR integrada ao branch da #14.
 - [ ] PR #59 reexecutada verde após integração.
-- [ ] Revisão independente de `qa_validator` sem bloqueadores.
+- [x] Revisão independente de `qa_validator` sem bloqueadores.
 - [ ] Aprovação final de @Balehlah.
 
 ## Risco residual e rollback
