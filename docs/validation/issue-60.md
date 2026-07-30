@@ -6,7 +6,8 @@
 - Base remota:
   [PR #59](https://github.com/Balehlah/Engine_lite/pull/59)
 - Issue: [#60](https://github.com/Balehlah/Engine_lite/issues/60)
-- Estado: implementação e validação em andamento
+- Estado: implementação e gates técnicos concluídos; integração e aprovações
+  pendentes
 
 ## Baseline anterior à mudança
 
@@ -73,7 +74,8 @@ com checksum deliberadamente incorreto.
 - [x] Tooling Mesa é proibido no pacote.
 - [x] Inventário/hash local final do ZIP anexado.
 
-Validação local limpa em Java 21:
+Validação local limpa em Java 21, anterior à normalização final dos assets
+textuais no checkout da CI:
 
 ```text
 gradlew.bat --no-daemon --stacktrace clean test
@@ -90,7 +92,7 @@ gradlew.bat --no-daemon --stacktrace
   -PisolatedBuildRoot=C:\tmp\engine-lite-issue60-final
 
 BUILD SUCCESSFUL
-SHA-256 antes/depois:
+SHA-256 local antes/depois:
 40e3676528260ecdd14df18e610e17746b9478dac395b5463f1bb66d63392493
 ```
 
@@ -110,27 +112,55 @@ mesa-runtime=absent
 
 | Gate | Ubuntu Java 21 | Ubuntu Java 25 | Windows Java 21 | Windows Java 25 |
 |---|---:|---:|---:|---:|
-| Build/test | Pendente | Pendente | Pendente | Pendente |
-| ZIP/CWD externo | Pendente | Pendente | Pendente | Pendente |
-| Lifecycle | Pendente | Pendente | Pendente | Pendente |
-| Viewport/goldens | Pendente | Pendente | Pendente | Pendente |
-| Input/assets | Pendente | Pendente | Pendente | Pendente |
-| OpenAL/Tiled | Pendente | Pendente | Pendente | Pendente |
-| Dispose exato | Pendente | Pendente | Pendente | Pendente |
-| Renderer exigido | N/A | N/A | Pendente | Pendente |
+| Build/test | PASS | PASS | PASS | PASS |
+| ZIP/CWD externo | PASS | PASS | PASS | PASS |
+| Lifecycle | PASS | PASS | PASS | PASS |
+| Viewport/goldens | PASS | PASS | PASS | PASS |
+| Input/assets | PASS | PASS | PASS | PASS |
+| OpenAL/Tiled | PASS | PASS | PASS | PASS |
+| Dispose exato | PASS | PASS | PASS | PASS |
+| Renderer exigido | PASS (`llvmpipe`) | PASS (`llvmpipe`) | PASS (`llvmpipe`) | PASS (`llvmpipe`) |
 
-- PR empilhada: pendente
-- Execução final: pendente
-- Artifacts Ubuntu/Windows: pendentes
-- SHA-256 canônico pré/pós-smokes: pendente
+- PR empilhada:
+  [#61](https://github.com/Balehlah/Engine_lite/pull/61)
+- Execução verde:
+  [`30553586242`](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242)
+- Jobs:
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188967)
+  e
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188982)
+- Artifacts de distribuição e evidências:
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763917439)
+  e
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763980579)
+- Relatórios de testes:
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763915942)
+  e
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763979557)
+- SHA-256 canônico do mesmo ZIP no Ubuntu e Windows, antes e depois dos
+  quatro smokes:
+  `9f9b53677c975233ebc72ad3d4f457e670e4f05419c6f6e749eff86a193f8d15`.
+
+Nos dois JDKs, Ubuntu reportou `llvmpipe (LLVM 20.1.2, 256 bits)` e Windows
+reportou `llvmpipe (LLVM 22.1.6, 256 bits)`. Os relatórios Windows registraram
+origem, commit e três digests Mesa fixados. A prova negativa observou o digest
+real do archive, recusou o digest deliberadamente incorreto e registrou
+`mesa.checksum.negative=PASS`.
+
+Cada smoke registrou `result=PASS`, três fixtures, CWD externo, OpenAL `null`,
+integridade pré/pós, três goldens e nove recursos descartados exatamente uma
+vez. O `verifyDistribution` aprovou a allowlist exata Windows/Linux e rejeita
+qualquer payload, extensão ou flag fora do contrato, além de runtime Mesa no
+ZIP.
 
 ## Checklist de fechamento
 
 - [x] `clean test` local final.
-- [ ] `java25CompatibilityTest` na matriz.
-- [ ] `buildSpikeDistribution verifyDistribution` final.
-- [ ] Quatro smokes remotos do mesmo ZIP.
-- [ ] Dois required checks verdes.
+- [x] `java25CompatibilityTest` na matriz.
+- [x] `buildSpikeDistribution verifyDistribution` final.
+- [x] Quatro smokes remotos do mesmo ZIP.
+- [x] Dois checks verdes.
+- [ ] Proteção de branch exige exatamente os dois checks suportados.
 - [ ] PR integrada ao branch da #14.
 - [ ] PR #59 reexecutada verde após integração.
 - [ ] Revisão independente de `qa_validator` sem bloqueadores.

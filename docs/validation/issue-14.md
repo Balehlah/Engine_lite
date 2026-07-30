@@ -4,8 +4,8 @@
 - Branch: `codex/issue-14-libgdx-lwjgl3-spike`
 - Base consumida: `9de87d9`
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
-- Estado: gates locais concluídos; Issue #60, matriz remota e decisão final
-  pendentes
+- Estado: gates locais e matriz remota concluídos; integração da Issue #60,
+  revisão independente e decisão final pendentes
 
 ## Gate de entrada
 
@@ -25,13 +25,13 @@ checkout principal foi preservada fora desta worktree.
 
 - [x] `clean test` final no Java 21.
 - [x] testes determinísticos da escala inteira e descarte.
-- [ ] compatibilidade Java 25.
+- [x] compatibilidade Java 25.
 - [x] distribuição reproduzível.
 - [x] execução do pacote a partir de CWD externo.
 - [x] smoke gráfico local autoencerrável.
 - [x] três PNGs com as fixtures da ADR-002.
 - [x] logs de lifecycle, input, asset, áudio, Tiled e dispose.
-- [ ] matriz Windows/Linux verde em Java 21/25.
+- [x] matriz Windows/Linux verde em Java 21/25.
 - [x] hashes dos artifacts locais.
 - [ ] revisão independente de `qa_validator`.
 - [ ] aprovação final de @Balehlah.
@@ -84,15 +84,37 @@ Uma segunda build em `C:\tmp\engine-lite-issue14-repro` produziu o mesmo hash.
 
 A tentativa local de `java25CompatibilityTest` não iniciou porque esta máquina
 não possui JDK 25 e o build não habilita download implícito de toolchains. A CI
-instala Temurin 21 e 25 explicitamente; por isso o item permanece aberto e não
-é inferido a partir do Java 21.
+instalou Temurin 21 e 25 explicitamente e fechou o item com execução real, sem
+inferir compatibilidade a partir do Java 21.
 
 ## Evidências remotas
 
-Os links da PR empilhada da #60, da execução final, dos dois jobs e dos
-artifacts serão registrados após a publicação da branch. Cada job deve
-construir a distribuição e iniciar o mesmo pacote instalado em Java 21/25, não
-apenas executar o classpath do Gradle.
+A implementação da #60 foi publicada na PR empilhada
+[#61](https://github.com/Balehlah/Engine_lite/pull/61). A execução
+[`30553586242`](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242)
+aprovou os jobs
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188967)
+e
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/job/90908188982)
+em Java 21/25.
+
+Cada job construiu a distribuição e iniciou o mesmo pacote instalado a partir
+de CWD externo nos dois JDKs, em vez de executar o classpath do Gradle. Os
+artifacts de distribuição/evidências estão preservados para
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763917439)
+e
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763980579).
+Os relatórios de teste estão preservados para
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763915942)
+e
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30553586242/artifacts/8763979557).
+
+Os quatro smokes registraram lifecycle, três viewports/goldens, input, assets,
+OpenAL, Tiled e descarte exato de nove recursos. O mesmo ZIP foi produzido nos
+dois runners e permaneceu intacto antes/depois de todos os smokes:
+`9f9b53677c975233ebc72ad3d4f457e670e4f05419c6f6e749eff86a193f8d15`.
+No Windows, Java 21 e 25 reportaram
+`llvmpipe (LLVM 22.1.6, 256 bits)` com Mesa 26.1.1 fixado e auditado.
 
 A execução histórica
 [`30476609058`](https://github.com/Balehlah/Engine_lite/actions/runs/30476609058)
