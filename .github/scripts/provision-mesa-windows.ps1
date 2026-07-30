@@ -102,10 +102,17 @@ if ($LASTEXITCODE -ne 0) {
     throw "7-Zip extraction failed with exit code $LASTEXITCODE."
 }
 
-$extractedFiles = Get-ChildItem -LiteralPath $extractRoot -Recurse -File
-$extractedRelativePaths = $extractedFiles | ForEach-Object {
-    [System.IO.Path]::GetRelativePath($extractRoot, $_.FullName).Replace('\', '/')
-}
+$extractedFiles = @(
+    Get-ChildItem -LiteralPath $extractRoot -Recurse -File
+)
+$extractedRelativePaths = @(
+    $extractedFiles | ForEach-Object {
+        [System.IO.Path]::GetRelativePath(
+            $extractRoot,
+            $_.FullName
+        ).Replace('\', '/')
+    }
+)
 $expectedExtractedPaths = @('x64/opengl32.dll', 'x64/libgallium_wgl.dll')
 if (@(Compare-Object $expectedExtractedPaths $extractedRelativePaths).Count -ne 0) {
     throw "Mesa extraction escaped the two-file allowlist: $extractedRelativePaths"
@@ -117,23 +124,34 @@ $openGlSha256 = Assert-Sha256 -Path $openGlPath -Expected $expectedOpenGlSha256
 $galliumSha256 = Assert-Sha256 -Path $galliumPath -Expected $expectedGalliumSha256
 
 $knownDllsPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs'
-$knownDllProperties = (Get-ItemProperty -LiteralPath $knownDllsPath).PSObject.Properties
-$knownDllNames = $knownDllProperties |
-    Where-Object { -not $_.Name.StartsWith('PS') } |
-    ForEach-Object {
-        @($_.Name.ToLowerInvariant(), ([string]$_.Value).ToLowerInvariant())
-    }
+$knownDllProperties = @(
+    (Get-ItemProperty -LiteralPath $knownDllsPath).PSObject.Properties
+)
+$knownDllNames = @(
+    $knownDllProperties |
+        Where-Object { -not $_.Name.StartsWith('PS') } |
+        ForEach-Object {
+            @($_.Name.ToLowerInvariant(), ([string]$_.Value).ToLowerInvariant())
+        }
+)
 $mesaDllNames = @('opengl32.dll', 'libgallium_wgl.dll')
-$knownMesaDlls = $mesaDllNames | Where-Object { $_ -in $knownDllNames }
+$knownMesaDlls = @(
+    $mesaDllNames | Where-Object { $_ -in $knownDllNames }
+)
+Write-Host "mesa.known-dlls.observed=$(
+    if ($knownMesaDlls.Count -eq 0) { 'none' } else { $knownMesaDlls -join ',' }
+)"
 if ($knownMesaDlls.Count -ne 0) {
     throw "Refusing per-JDK Mesa deployment because KnownDLLs contains: $knownMesaDlls"
 }
 Write-Host 'mesa.known-dlls=PASS'
 
-$resolvedJavaHomes = $JavaHomes |
-    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-    ForEach-Object { [System.IO.Path]::GetFullPath($_) } |
-    Select-Object -Unique
+$resolvedJavaHomes = @(
+    $JavaHomes |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        ForEach-Object { [System.IO.Path]::GetFullPath($_) } |
+        Select-Object -Unique
+)
 if ($resolvedJavaHomes.Count -ne 2) {
     throw "Expected distinct Java 21 and Java 25 homes; found $resolvedJavaHomes"
 }
