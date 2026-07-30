@@ -6,8 +6,8 @@
 - Base remota:
   [PR #59](https://github.com/Balehlah/Engine_lite/pull/59)
 - Issue: [#60](https://github.com/Balehlah/Engine_lite/issues/60)
-- Estado: implementação e gates técnicos concluídos; integração e aprovações
-  pendentes
+- Estado: todos os critérios concluídos; aguardando apenas a CI do registro e
+  o fechamento formal
 
 ## Baseline anterior à mudança
 
@@ -171,6 +171,19 @@ PR obrigatório, `strict=true`, aplicação a administradores, resolução de
 conversas e exatamente os contexts `Build and test (Ubuntu)` e
 `Build and test (Windows)`.
 
+## Integração e decisão downstream
+
+- @Balehlah aprovou ADR-006/D-010 e a PR #61.
+- A [PR #61](https://github.com/Balehlah/Engine_lite/pull/61) foi integrada
+  somente na branch da #14 pelo merge `628bfb3`.
+- A PR #59 reexecutou verde após a integração:
+  [run 30559042291](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291),
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291/job/90926973949)
+  e
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291/job/90926973734).
+- @Balehlah aprovou aceitar libGDX/LWJGL3 conforme ADR-002, preservando Java2D
+  como fallback legado; D-011 registra o resultado sem reescrever D-008.
+
 ## Checklist de fechamento
 
 - [x] `clean test` local final.
@@ -179,10 +192,10 @@ conversas e exatamente os contexts `Build and test (Ubuntu)` e
 - [x] Quatro smokes remotos do mesmo ZIP.
 - [x] Dois checks verdes.
 - [x] Proteção de branch exige exatamente os dois checks suportados.
-- [ ] PR integrada ao branch da #14.
-- [ ] PR #59 reexecutada verde após integração.
+- [x] PR integrada ao branch da #14.
+- [x] PR #59 reexecutada verde após integração.
 - [x] Revisão independente de `qa_validator` sem bloqueadores.
-- [ ] Aprovação final de @Balehlah.
+- [x] Aprovação final de @Balehlah.
 
 ## Risco residual e rollback
 

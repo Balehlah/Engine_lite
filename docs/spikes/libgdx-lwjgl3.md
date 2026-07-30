@@ -1,6 +1,6 @@
 # Spike desktop libGDX/LWJGL3 — Issue #14
 
-- Estado: em execução; decisão do backend pendente
+- Estado: concluído; backend aceito pela ADR-002/D-011
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
 - Dependência bloqueante:
   [#60](https://github.com/Balehlah/Engine_lite/issues/60)
@@ -14,7 +14,7 @@
 
 ## Objetivo e limites
 
-O spike mede se libGDX/LWJGL3 atende integralmente o gate da
+O spike mediu se libGDX/LWJGL3 atende integralmente o gate da
 [ADR-002](../adr/ADR-002-libgdx-lwjgl3-backend.md), na matriz substituída pela
 [ADR-006](../adr/ADR-006-windows-linux-desktop-support.md). A implementação
 permanece isolada e removível. Ela não migra subsistemas legados, não remove
@@ -36,22 +36,22 @@ fora do escopo.
 
 ## Matriz do gate
 
-O backend só pode ser aceito quando todos os itens estiverem `PASS`, houver
-validação independente de `qa_validator` e @Balehlah registrar a aprovação
-final. Aprovação parcial não é permitida.
+O backend foi aceito depois que todos os itens ficaram `PASS`, houve validação
+independente de `qa_validator` e @Balehlah registrou a aprovação final.
+Aprovação parcial não foi utilizada.
 
 | Área | Esperado | Windows | Linux | Evidência |
 |---|---|---:|---:|---|
-| Build | `clean test` e distribuição com exit code 0 | Pendente | Pendente | CI da branch |
-| Lifecycle | abre, redimensiona e fecha sem exceção | Pendente | Pendente | `lifecycle.log` |
-| Viewport | fixtures 640×360, 800×600 e 1280×720 | Pendente | Pendente | testes e PNGs |
-| Filtragem | nearest e nenhuma escala fracionária | Pendente | Pendente | teste e golden |
-| Input/sprite | evento mínimo altera sprite renderizado | Pendente | Pendente | log e PNG |
-| Assets | recurso interno carrega com CWD externo | Pendente | Pendente | `probe.log` |
-| Integrações | OpenAL Soft real com driver `null`; TMX carrega | Pendente | Pendente | `probe.log` |
-| Recursos | cada `Disposable` tem contagem final 1 | Pendente | Pendente | `dispose.log` |
-| Packaging | o mesmo ZIP inicia/encerra em Java 21/25 | Pendente | Pendente | artifacts, hashes e smoke |
-| Qualidade | zero defeitos bloqueadores | Pendente | Pendente | checklist QA |
+| Build | `clean test` e distribuição com exit code 0 | PASS | PASS | CI da branch |
+| Lifecycle | abre, redimensiona e fecha sem exceção | PASS | PASS | `lifecycle.log` |
+| Viewport | fixtures 640×360, 800×600 e 1280×720 | PASS | PASS | testes e PNGs |
+| Filtragem | nearest e nenhuma escala fracionária | PASS | PASS | teste e golden |
+| Input/sprite | evento mínimo altera sprite renderizado | PASS | PASS | log e PNG |
+| Assets | recurso interno carrega com CWD externo | PASS | PASS | `probe.log` |
+| Integrações | OpenAL Soft real com driver `null`; TMX carrega | PASS | PASS | `probe.log` |
+| Recursos | cada `Disposable` tem contagem final 1 | PASS | PASS | `dispose.log` |
+| Packaging | o mesmo ZIP inicia/encerra em Java 21/25 | PASS | PASS | artifacts, hashes e smoke |
+| Qualidade | zero defeitos bloqueadores | PASS | PASS | checklist QA |
 
 ## Fixtures de viewport
 
@@ -106,7 +106,7 @@ com URL e hashes fixos. `probe.log` deve conter `gl.renderer` com `llvmpipe` e
 `runner.properties` registra origem, commit, licença e digests. Mesa não integra
 o pacote nem os artifacts.
 
-## Baseline e decisão pendente
+## Baseline e decisão final
 
 O baseline local Windows anterior à Issue #60 passou em Java 21 e manteve o ZIP
 SHA-256
@@ -115,9 +115,16 @@ antes/depois do smoke. Esse valor identifica a entrada da mudança, não o artif
 final.
 
 A execução remota anterior comprovou Ubuntu e expôs a ausência de WGL no runner
-Windows. Os links, hashes e artifacts da matriz final serão registrados em
+Windows. A PR #61 incorporou Mesa auditável e a matriz pós-integração da PR #59
+[30559042291](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291)
+passou nos dois sistemas e JDKs. Os links, hashes e artifacts estão registrados em
 [`docs/validation/issue-14.md`](../validation/issue-14.md) e
 [`docs/validation/issue-60.md`](../validation/issue-60.md).
+
+O `qa_validator` registrou **PASS, zero defeitos bloqueadores** e @Balehlah
+aprovou a regra **Aceitar** em 2026-07-30. A ADR-002/D-011 seleciona
+libGDX/LWJGL3 e preserva Java2D como fallback legado; migração horizontal
+permanece fora desta entrega.
 
 ## Riscos e fallback
 

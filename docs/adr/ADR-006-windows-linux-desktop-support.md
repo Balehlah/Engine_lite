@@ -40,6 +40,13 @@ equivalente aprovada para a terceira família original.
    inalteradas como registro histórico. Esta ADR substitui o contrato vigente
    sem reescrever a decisão original.
 
+## Resultado posterior
+
+Em 2026-07-30, a Issue #14 concluiu o gate descrito no item 3. A matriz
+Windows/Linux passou em Java 21/25, o `qa_validator` confirmou zero defeitos
+bloqueadores e @Balehlah aprovou a ADR-002. D-011 registra a aceitação de
+libGDX/LWJGL3 e preserva Java2D como fallback legado.
+
 ## Justificativa
 
 Uma plataforma suportada exige build, pacote, smoke gráfico reproduzível,

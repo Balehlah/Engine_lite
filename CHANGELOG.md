@@ -28,6 +28,8 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   viewport e descarte.
 - ADR-006/D-010, que torna Windows e Linux as únicas famílias desktop
   suportadas pela linha 1.0.0.
+- ADR-002/D-011, que aceita libGDX/LWJGL3 como backend desktop e preserva
+  Java2D como fallback legado.
 - Provisionamento efêmero e auditável de Mesa llvmpipe 26.1.1 para o smoke
   Windows hospedado.
 
@@ -48,7 +50,8 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Registradas as decisões de produto, plataformas, Java, licença, API,
   viewport e backend da Issue #9.
 - Adicionados ADRs, auditoria de fundação, roadmap e política de versionamento.
-- Definido gate mensurável e fallback para o spike libGDX/LWJGL3.
+- Concluído o gate mensurável do spike libGDX/LWJGL3 com decisão aceita,
+  fallback preservado e QA independente sem bloqueadores.
 - Documentado o contrato estável, o uso de `api`/`implementation`, a atualização
   aprovada da baseline e o processo de atribuição.
 - Adicionados especificação reproduzível e registro de evidências da Issue #14.

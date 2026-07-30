@@ -4,15 +4,15 @@
 - Branch: `codex/issue-14-libgdx-lwjgl3-spike`
 - Base consumida: `9de87d9`
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
-- Estado: gates locais, matriz remota e revisão independente concluídos;
-  integração da Issue #60 e decisão final pendentes
+- Estado: gates, integração, revisão independente e decisão ADR-002 concluídos;
+  fechamento formal da Issue #60 pendente
 
 ## Gate de entrada
 
 - [x] #10 fechada em 2026-07-25.
 - [x] #12 fechada em 2026-07-27.
 - [x] #13 fechada em 2026-07-29.
-- [ ] #60 integrada ao branch do spike.
+- [x] #60 integrada ao branch do spike pelo merge `628bfb3`.
 - [x] Baseline local anterior à implementação:
   `gradlew.bat --no-daemon clean test -PtestRandomSeed=1414
   -PisolatedBuildRoot=C:\tmp\engine-lite-issue14-baseline`.
@@ -34,7 +34,7 @@ checkout principal foi preservada fora desta worktree.
 - [x] matriz Windows/Linux verde em Java 21/25.
 - [x] hashes dos artifacts locais.
 - [x] revisão independente de `qa_validator`.
-- [ ] aprovação final de @Balehlah.
+- [x] aprovação final de @Balehlah.
 
 ## Evidências locais
 
@@ -120,6 +120,22 @@ O `qa_validator` independente confrontou a matriz, os quatro artifacts, 14
 entradas de manifesto por smoke, estrutura interna do ZIP/JARs, notices e
 proveniência. Também repetiu o gate local completo com seed `6061`. O parecer
 foi **PASS, zero defeitos bloqueadores**.
+
+Após a integração da PR #61, a PR #59 reexecutou a matriz na
+[execução 30559042291](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291).
+Os jobs
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291/job/90926973949)
+e
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291/job/90926973734)
+passaram novamente.
+
+## Decisão ADR-002
+
+Em 2026-07-30, depois da matriz completa e do parecer QA sem bloqueadores,
+@Balehlah aprovou **aceitar libGDX/LWJGL3 como backend desktop**, preservando
+Java2D como fallback legado. ADR-002 passa ao estado aceita e D-011 registra a
+decisão final sem reescrever a D-008 histórica. Migração horizontal e remoção
+do fallback permanecem fora do escopo desta entrega.
 
 A execução histórica
 [`30476609058`](https://github.com/Balehlah/Engine_lite/actions/runs/30476609058)

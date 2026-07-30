@@ -4,11 +4,12 @@ Engine 2D profissional em Java puro para jogos pixel art. Arquitetura modular, l
 
 ## Estado do projeto
 
-O código atual é um protótipo pré-1.0. A demo consumidora ainda usa o backend
-Java2D legado, enquanto um spike isolado de libGDX/LWJGL3 valida o candidato a
-backend da futura 1.0.0. O produto é o motor; `game.test` é apenas uma demo
-consumidora. A futura versão 1.0.0 será a primeira release pública com contrato
-SemVer e API estável auditada.
+O código atual é um protótipo pré-1.0. libGDX/LWJGL3 foi aceito pela ADR-002
+como backend desktop da futura 1.0.0, enquanto a demo consumidora ainda usa
+Java2D como fallback legado. A decisão do backend não antecipa a migração
+horizontal. O produto é o motor; `game.test` é apenas uma demo consumidora. A
+futura versão 1.0.0 será a primeira release pública com contrato SemVer e API
+estável auditada.
 
 A versão de desenvolvimento é `1.0.0-SNAPSHOT`. Somente `engine.api.*` é
 protegido pela baseline; todos os demais pacotes públicos atuais continuam
@@ -152,10 +153,11 @@ formal do boundary legado.
 
 ### Spike empacotado libGDX/LWJGL3
 
-O spike da Issue #14 é experimental e removível. Ele constrói um ZIP canônico,
-extrai esse ZIP em diretório temporário, inicia o launcher a partir de um CWD
-externo e autoencerra depois de validar lifecycle, viewport, input, assets,
-áudio, Tiled e descarte de recursos:
+O spike removível da Issue #14 concluiu o gate e aprovou libGDX/LWJGL3 como
+backend desktop. Ele constrói um ZIP canônico, extrai esse ZIP em diretório
+temporário, inicia o launcher a partir de um CWD externo e autoencerra depois
+de validar lifecycle, viewport, input, assets, áudio, Tiled e descarte de
+recursos:
 
 ```batch
 gradlew.bat buildSpikeDistribution verifyDistribution
@@ -301,7 +303,7 @@ ColorPalette.CGA
 - Java 25 LTS é uma linha adicional de compatibilidade, não a baseline
 - Windows ou Linux
 - libGDX 1.14.2 e LWJGL 3.4.1 são resolvidos pelo Gradle Wrapper somente para
-  o spike experimental
+  o backend empacotado
 
 ## 📈 Evolução Futura
 
