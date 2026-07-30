@@ -27,7 +27,7 @@ gradlew.bat --no-daemon clean test -PtestRandomSeed=1101
 gradlew.bat --no-daemon clean test -PtestRandomSeed=1129
 ```
 
-No Linux/macOS, substitua `gradlew.bat` por `./gradlew`.
+No Linux, substitua `gradlew.bat` por `./gradlew`.
 
 Filtros opcionais por tag:
 

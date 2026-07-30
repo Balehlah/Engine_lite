@@ -1,0 +1,21 @@
+Component: com.badlogicgames.gdx:gdx-platform:1.14.2:natives-desktop
+Origin: https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-platform/1.14.2/
+Source SHA-256: f4847981d27c6524a30f5665036ec8c11f48c8eda7610bb63f742de95ffe1970
+License: Apache-2.0
+License URL: https://www.apache.org/licenses/LICENSE-2.0
+
+The upstream desktop-native JAR contains Windows, Linux and macOS payloads.
+Engine Lite deterministically creates
+gdx-platform-1.14.2-natives-windows-linux.jar from the pinned source and keeps
+only:
+
+- gdx.dll
+- gdx64.dll
+- libgdx64.so
+- libgdxarm.so
+- libgdxarm64.so
+- libgdxriscv64.so
+
+The curated artifact excludes libgdx64.dylib and libgdxarm64.dylib. The build
+verifies the source digest and exact input/output entry allowlists before the
+artifact can enter the distribution.

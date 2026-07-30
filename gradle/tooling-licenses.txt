@@ -5,3 +5,4 @@ workflow|actions/setup-java|v5|MIT|https://github.com/actions/setup-java/blob/ma
 workflow|gradle/actions/setup-gradle|v6|MIT plus separately licensed vendor caching component|https://github.com/gradle/actions/blob/main/LICENSE|https://github.com/gradle/actions|ci
 workflow|actions/upload-artifact|v7|MIT|https://github.com/actions/upload-artifact/blob/main/LICENSE|https://github.com/actions/upload-artifact|ci
 toolchain|eclipse-temurin|21 and 25|GPL-2.0-only WITH Classpath-exception-2.0|https://openjdk.org/legal/gplv2+ce.html|https://adoptium.net/temurin/|build-and-ci
+ci-tool|pal1000/mesa-dist-win|26.1.1|MIT core with per-file SPDX licenses|https://docs.mesa3d.org/license.html|https://github.com/pal1000/mesa-dist-win/tree/1e2b696ce9e81e77e17ee6e4787587237ce9d2ed|windows-smoke-only

@@ -81,6 +81,6 @@ assinaturas de `engine.api.*`; portanto, a experiência não amplia a superfíci
 SemVer nem o classpath contratual de `engine:core`.
 
 O task raiz `verifyDistribution` agrega baseline, fronteiras, licenças, assets e
-JARs e também inspeciona o ZIP, o backend, os natives e os textos completos de
-licença distribuídos. Ele faz parte de `clean test`, o gate executado pela CI
-desktop.
+JARs e também inspeciona o ZIP, o backend, o inventário exato de natives
+Windows/Linux, a ausência de payload proibido e os textos completos de licença
+distribuídos. Ele faz parte de `clean test`, o gate executado pela CI desktop.

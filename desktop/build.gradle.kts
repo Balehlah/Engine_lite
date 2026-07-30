@@ -10,6 +10,7 @@ import java.security.MessageDigest
 import java.util.HexFormat
 import java.util.Properties
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import javax.imageio.ImageIO
 
@@ -23,9 +24,53 @@ description = "LWJGL3 spike launcher and transitional Java2D desktop backend."
 val gdxVersion = providers.gradleProperty("gdxVersion").get()
 val lwjglVersion = providers.gradleProperty("lwjglVersion").get()
 val isWindows = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
-val isMacOs = System.getProperty("os.name").startsWith("Mac", ignoreCase = true)
+val isLinux = System.getProperty("os.name").startsWith("Linux", ignoreCase = true)
 val spikeApplicationName = "engine-lite-spike"
 val spikeMainClass = "engine.incubator.gdx.spike.desktop.Lwjgl3SpikeLauncher"
+val lwjglModules = listOf(
+    "lwjgl",
+    "lwjgl-glfw",
+    "lwjgl-jemalloc",
+    "lwjgl-openal",
+    "lwjgl-opengl",
+    "lwjgl-stb",
+)
+val supportedLwjglNativeClassifiers = listOf(
+    "natives-linux",
+    "natives-linux-arm32",
+    "natives-linux-arm64",
+    "natives-windows",
+    "natives-windows-x86",
+)
+val gdxDesktopNativesSourceSha256 =
+    "f4847981d27c6524a30f5665036ec8c11f48c8eda7610bb63f742de95ffe1970"
+val supportedGdxNativeEntries = setOf(
+    "gdx.dll",
+    "gdx64.dll",
+    "libgdx64.so",
+    "libgdxarm.so",
+    "libgdxarm64.so",
+    "libgdxriscv64.so",
+)
+val completeGdxNativePayload = supportedGdxNativeEntries + setOf(
+    "libgdx64.dylib",
+    "libgdxarm64.dylib",
+)
+
+fun sha256(file: File): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    file.inputStream().buffered().use { input ->
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        while (true) {
+            val count = input.read(buffer)
+            if (count < 0) {
+                break
+            }
+            digest.update(buffer, 0, count)
+        }
+    }
+    return HexFormat.of().formatHex(digest.digest())
+}
 
 val legacy = sourceSets.create("legacy") {
     java {
@@ -39,23 +84,119 @@ val legacy = sourceSets.create("legacy") {
     }
 }
 
+val gdxDesktopNativesSource = configurations.create("gdxDesktopNativesSource") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
+    description = "Pinned source JAR used to curate libGDX natives for Windows and Linux."
+}
+
+val curatedGdxNativeReport =
+    layout.buildDirectory.file("reports/distribution/gdx-platform-natives-curated.txt")
+val curateGdxDesktopNatives = tasks.register<Jar>("curateGdxDesktopNatives") {
+    group = "distribution"
+    description =
+        "Produces a reproducible libGDX native JAR containing only Windows and Linux payloads."
+    archiveBaseName.set("gdx-platform")
+    archiveVersion.set(gdxVersion)
+    archiveClassifier.set("natives-windows-linux")
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+    outputs.file(curatedGdxNativeReport)
+
+    val sourceJar = providers.provider {
+        val files = gdxDesktopNativesSource.resolve()
+        check(files.size == 1) {
+            "Expected one libGDX desktop native source JAR; found $files"
+        }
+        files.single()
+    }
+    from(sourceJar.map { zipTree(it) }) {
+        include(*supportedGdxNativeEntries.toTypedArray())
+    }
+    from(
+        rootProject.layout.projectDirectory.file(
+            "third_party/gdx-platform-1.14.2-natives-desktop.provenance",
+        ),
+    ) {
+        into("META-INF")
+        rename { "ENGINE-LITE-NATIVE-PROVENANCE.txt" }
+    }
+    manifest {
+        attributes(
+            "Implementation-Title" to "libGDX desktop natives curated for Engine Lite",
+            "Implementation-Version" to gdxVersion,
+            "Engine-Lite-Supported-Platforms" to "Windows,Linux",
+            "Engine-Lite-Source-SHA-256" to gdxDesktopNativesSourceSha256,
+        )
+    }
+
+    doFirst {
+        val source = sourceJar.get()
+        check(sha256(source) == gdxDesktopNativesSourceSha256) {
+            "libGDX desktop natives source checksum mismatch for $source."
+        }
+        val sourcePayload = ZipFile(source).use { archive ->
+            archive.entries().asSequence()
+                .filterNot { it.isDirectory || it.name == "META-INF/MANIFEST.MF" }
+                .map { it.name }
+                .toSet()
+        }
+        check(sourcePayload == completeGdxNativePayload) {
+            "Unexpected libGDX desktop native payload. Expected " +
+                "$completeGdxNativePayload, found $sourcePayload."
+        }
+    }
+
+    doLast {
+        val curatedJar = archiveFile.get().asFile
+        val curatedPayload = ZipFile(curatedJar).use { archive ->
+            archive.entries().asSequence()
+                .filterNot { it.isDirectory || it.name.startsWith("META-INF/") }
+                .map { it.name }
+                .toSet()
+        }
+        check(curatedPayload == supportedGdxNativeEntries) {
+            "Curated libGDX native payload differs from the Windows/Linux allowlist: " +
+                curatedPayload
+        }
+        val report = curatedGdxNativeReport.get().asFile
+        report.parentFile.mkdirs()
+        report.writeText(
+            buildString {
+                appendLine("source.coordinates=com.badlogicgames.gdx:gdx-platform:$gdxVersion")
+                appendLine("source.classifier=natives-desktop")
+                appendLine("source.sha256=$gdxDesktopNativesSourceSha256")
+                appendLine("curated.file=${curatedJar.name}")
+                appendLine("curated.sha256=${sha256(curatedJar)}")
+                appendLine(
+                    "curated.entries=${supportedGdxNativeEntries.sorted().joinToString(",")}",
+                )
+                appendLine("excluded.entries=libgdx64.dylib,libgdxarm64.dylib")
+                appendLine("license=Apache-2.0")
+            },
+            Charsets.UTF_8,
+        )
+    }
+}
+
 dependencies {
     implementation(project(":engine:gdx"))
-    implementation("com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion")
-    runtimeOnly("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop")
+    implementation("com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion") {
+        exclude(group = "org.lwjgl")
+    }
+    add(
+        gdxDesktopNativesSource.name,
+        "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop",
+    )
+    runtimeOnly(files(curateGdxDesktopNatives.flatMap { it.archiveFile }))
 
-    constraints {
-        listOf(
-            "lwjgl",
-            "lwjgl-glfw",
-            "lwjgl-jemalloc",
-            "lwjgl-openal",
-            "lwjgl-opengl",
-            "lwjgl-stb",
-        ).forEach { module ->
-            implementation("org.lwjgl:$module:$lwjglVersion") {
-                because("LWJGL 3.4.1 or newer is required for the Java 25 compatibility gate.")
-            }
+    lwjglModules.forEach { module ->
+        implementation("org.lwjgl:$module:$lwjglVersion") {
+            because("LWJGL 3.4.1 or newer is required for the Java 25 compatibility gate.")
+        }
+        supportedLwjglNativeClassifiers.forEach { classifier ->
+            runtimeOnly("org.lwjgl:$module:$lwjglVersion:$classifier")
         }
     }
 
@@ -70,12 +211,7 @@ dependencies {
 application {
     applicationName = spikeApplicationName
     mainClass = spikeMainClass
-    applicationDefaultJvmArgs = buildList {
-        add("--enable-native-access=ALL-UNNAMED")
-        if (isMacOs) {
-            add("-XstartOnFirstThread")
-        }
-    }
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
 }
 
 tasks.named<CreateStartScripts>("startScripts") {
@@ -139,11 +275,16 @@ configurations.create("legacyElements") {
 }
 
 tasks.named("assemble") {
-    dependsOn(legacyJar)
+    dependsOn(
+        legacyJar,
+        curateGdxDesktopNatives,
+    )
 }
 
 val installDist = tasks.named<Sync>("installDist")
 val distZip = tasks.named<Zip>("distZip")
+val spikeArchiveHashRecord =
+    layout.buildDirectory.file("reports/distribution/spike-archive.sha256")
 
 val buildSpikeDistribution = tasks.register("buildSpikeDistribution") {
     group = "distribution"
@@ -152,6 +293,46 @@ val buildSpikeDistribution = tasks.register("buildSpikeDistribution") {
         installDist,
         distZip,
     )
+}
+
+val recordSpikeDistributionHash = tasks.register("recordSpikeDistributionHash") {
+    group = "distribution"
+    description = "Records the canonical ZIP hash before any runtime smoke."
+    dependsOn(distZip)
+    inputs.file(distZip.flatMap { it.archiveFile })
+    outputs.file(spikeArchiveHashRecord)
+    outputs.upToDateWhen { false }
+
+    doLast {
+        val archive = distZip.get().archiveFile.get().asFile
+        val record = spikeArchiveHashRecord.get().asFile
+        record.parentFile.mkdirs()
+        record.writeText(
+            "${sha256(archive)}  ${archive.name}\n",
+            Charsets.UTF_8,
+        )
+    }
+}
+
+val verifySpikeDistributionHash = tasks.register("verifySpikeDistributionHash") {
+    group = "verification"
+    description = "Fails if the canonical ZIP changed after the runtime smokes."
+    outputs.upToDateWhen { false }
+
+    doLast {
+        val archive = distZip.get().archiveFile.get().asFile
+        val record = spikeArchiveHashRecord.get().asFile
+        check(archive.isFile && record.isFile) {
+            "The ZIP and its pre-smoke hash record must exist before integrity verification."
+        }
+        val expected = record.readText(Charsets.UTF_8).trim().substringBefore(' ')
+        val observed = sha256(archive)
+        check(observed == expected) {
+            "The canonical ZIP changed after smoke execution. Expected $expected, " +
+                "observed $observed."
+        }
+        logger.lifecycle("Verified unchanged canonical ZIP SHA-256: $observed")
+    }
 }
 
 val spikeSmokeVariant = providers.gradleProperty("spikeSmokeVariant")
@@ -225,6 +406,16 @@ val smokeSpikeDistribution = tasks.register("smokeSpikeDistribution") {
                 .toAbsolutePath()
                 .normalize()
             val archive = distZip.get().archiveFile.get().asFile
+            val archiveHashBefore = sha256(archive)
+            val recordedHash = spikeArchiveHashRecord.get().asFile
+                .takeIf(File::isFile)
+                ?.readText(Charsets.UTF_8)
+                ?.trim()
+                ?.substringBefore(' ')
+            check(recordedHash == null || recordedHash == archiveHashBefore) {
+                "The ZIP differs from its pre-smoke hash. Expected $recordedHash, " +
+                    "observed $archiveHashBefore."
+            }
             ZipInputStream(archive.inputStream().buffered()).use { zipInput ->
                 while (true) {
                     val entry = zipInput.nextEntry ?: break
@@ -271,17 +462,17 @@ val smokeSpikeDistribution = tasks.register("smokeSpikeDistribution") {
                     "call",
                     launcher.absolutePath,
                 ) + smokeArguments
-                isMacOs -> listOf(
-                    "/bin/sh",
-                    launcher.absolutePath,
-                ) + smokeArguments
-                else -> listOf(
+                isLinux -> listOf(
                     "xvfb-run",
                     "--auto-servernum",
                     "--server-args=-screen 0 1920x1080x24",
                     "/bin/sh",
                     launcher.absolutePath,
                 ) + smokeArguments
+                else -> error(
+                    "The spike smoke supports only Windows and Linux. " +
+                        "Detected ${System.getProperty("os.name")}.",
+                )
             }
 
             logger.lifecycle(
@@ -344,6 +535,28 @@ val smokeSpikeDistribution = tasks.register("smokeSpikeDistribution") {
                 "The spike did not record probe.log."
             }
             val probeContents = probeLog.readText(Charsets.UTF_8)
+            val glRenderer = probeContents.lineSequence()
+                .firstOrNull { " gl.renderer=" in it }
+                ?.substringAfter(" gl.renderer=")
+                ?.trim()
+                ?: error("probe.log does not record gl.renderer.")
+            val requireLlvmPipe = System.getenv("ENGINE_LITE_REQUIRE_LLVMPIPE")
+                ?.let { it == "1" || it.equals("true", ignoreCase = true) }
+                ?: false
+            if (requireLlvmPipe) {
+                check(glRenderer.contains("llvmpipe", ignoreCase = true)) {
+                    "Windows CI requires Mesa llvmpipe; observed renderer: $glRenderer"
+                }
+                check(
+                    System.getenv("GALLIUM_DRIVER").equals(
+                        "llvmpipe",
+                        ignoreCase = true,
+                    ) && System.getenv("LIBGL_ALWAYS_SOFTWARE") == "1",
+                ) {
+                    "Windows CI must force GALLIUM_DRIVER=llvmpipe and " +
+                        "LIBGL_ALWAYS_SOFTWARE=1."
+                }
+            }
             val observedWorkingDirectory = probeContents.lineSequence()
                 .firstOrNull { " cwd=" in it }
                 ?.substringAfter(" cwd=")
@@ -392,14 +605,50 @@ val smokeSpikeDistribution = tasks.register("smokeSpikeDistribution") {
                 "OpenAL Soft did not initialize the required null backend."
             }
 
+            val archiveHashAfter = sha256(archive)
+            check(archiveHashAfter == archiveHashBefore) {
+                "The smoke modified the canonical ZIP. Before $archiveHashBefore, " +
+                    "after $archiveHashAfter."
+            }
+            val mesaEnvironment = linkedMapOf(
+                "mesa.version" to "ENGINE_LITE_MESA_VERSION",
+                "mesa.source.url" to "ENGINE_LITE_MESA_SOURCE_URL",
+                "mesa.source.commit" to "ENGINE_LITE_MESA_SOURCE_COMMIT",
+                "mesa.archive.sha256" to "ENGINE_LITE_MESA_ARCHIVE_SHA256",
+                "mesa.opengl32.sha256" to "ENGINE_LITE_MESA_OPENGL32_SHA256",
+                "mesa.libgallium_wgl.sha256" to
+                    "ENGINE_LITE_MESA_LIBGALLIUM_WGL_SHA256",
+                "mesa.license" to "ENGINE_LITE_MESA_LICENSE",
+            )
+            if (requireLlvmPipe) {
+                val missingMesaMetadata = mesaEnvironment.filterValues {
+                    System.getenv(it).isNullOrBlank()
+                }
+                check(missingMesaMetadata.isEmpty()) {
+                    "Windows CI Mesa metadata is incomplete: ${missingMesaMetadata.values}"
+                }
+            }
             absoluteEvidenceDirectory.resolve("runner.properties")
                 .toFile()
                 .writeText(
-                    "archive=${archive.name}\n"
-                        + "cwd.external=PASS\n"
-                        + "cwd.observed=$observedRealDirectory\n"
-                        + "java.variant=$variant\n"
-                        + "openal.null=PASS\n",
+                    buildString {
+                        appendLine("archive=${archive.name}")
+                        appendLine("archive.sha256.before=$archiveHashBefore")
+                        appendLine("archive.sha256.after=$archiveHashAfter")
+                        appendLine("archive.integrity=PASS")
+                        appendLine("cwd.external=PASS")
+                        appendLine("cwd.observed=$observedRealDirectory")
+                        appendLine("java.variant=$variant")
+                        appendLine("openal.null=PASS")
+                        appendLine("gl.renderer=$glRenderer")
+                        appendLine("mesa.enabled=$requireLlvmPipe")
+                        mesaEnvironment.forEach { (property, environment) ->
+                            appendLine(
+                                "$property=" +
+                                    (System.getenv(environment) ?: "not-applicable"),
+                            )
+                        }
+                    },
                     Charsets.UTF_8,
                 )
         } finally {
@@ -536,10 +785,21 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
             .use { runner.load(it) }
         check(
             runner.getProperty("cwd.external") == "PASS"
-                && runner.getProperty("openal.null") == "PASS",
+                && runner.getProperty("openal.null") == "PASS"
+                && runner.getProperty("archive.integrity") == "PASS"
+                && runner.getProperty("archive.sha256.before")
+                    == runner.getProperty("archive.sha256.after"),
         ) {
-            "The package runner did not validate external CWD and OpenAL null: " +
+            "The package runner did not validate CWD, OpenAL and ZIP integrity: " +
                 runner
+        }
+        if (runner.getProperty("mesa.enabled").toBoolean()) {
+            check(
+                runner.getProperty("gl.renderer")
+                    .contains("llvmpipe", ignoreCase = true),
+            ) {
+                "Windows evidence did not record the required llvmpipe renderer."
+            }
         }
         val viewportLog = evidenceByName.getValue("viewport.log")
             .readText(Charsets.UTF_8)
@@ -563,21 +823,6 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
         }
 
         val filesToHash = listOf(distZip.get().archiveFile.get().asFile) + evidenceFiles
-        fun sha256(file: File): String {
-            val digest = MessageDigest.getInstance("SHA-256")
-            file.inputStream().buffered().use { input ->
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                while (true) {
-                    val count = input.read(buffer)
-                    if (count < 0) {
-                        break
-                    }
-                    digest.update(buffer, 0, count)
-                }
-            }
-            return HexFormat.of().formatHex(digest.digest())
-        }
-
         val manifest = spikeEvidenceManifest.get().asFile
         manifest.parentFile.mkdirs()
         manifest.writeText(
@@ -612,6 +857,18 @@ tasks.register("spikeDistributionSmoke") {
     group = "verification"
     description = "Canonical alias for smoke-testing the installed spike package."
     dependsOn(generateSpikeEvidenceManifest)
+}
+
+tasks.register("recordSpikeArchiveHash") {
+    group = "distribution"
+    description = "Alias for recording the canonical ZIP hash before smoke execution."
+    dependsOn(recordSpikeDistributionHash)
+}
+
+tasks.register("verifySpikeArchiveHash") {
+    group = "verification"
+    description = "Alias for verifying the canonical ZIP hash after smoke execution."
+    dependsOn(verifySpikeDistributionHash)
 }
 
 tasks.named("test") {

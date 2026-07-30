@@ -4,13 +4,15 @@
 - Branch: `codex/issue-14-libgdx-lwjgl3-spike`
 - Base consumida: `9de87d9`
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
-- Estado: gates locais concluídos; matriz remota e decisão final pendentes
+- Estado: gates locais concluídos; Issue #60, matriz remota e decisão final
+  pendentes
 
 ## Gate de entrada
 
 - [x] #10 fechada em 2026-07-25.
 - [x] #12 fechada em 2026-07-27.
 - [x] #13 fechada em 2026-07-29.
+- [ ] #60 integrada ao branch do spike.
 - [x] Baseline local anterior à implementação:
   `gradlew.bat --no-daemon clean test -PtestRandomSeed=1414
   -PisolatedBuildRoot=C:\tmp\engine-lite-issue14-baseline`.
@@ -29,7 +31,7 @@ checkout principal foi preservada fora desta worktree.
 - [x] smoke gráfico local autoencerrável.
 - [x] três PNGs com as fixtures da ADR-002.
 - [x] logs de lifecycle, input, asset, áudio, Tiled e dispose.
-- [ ] matriz Windows/Linux/macOS verde.
+- [ ] matriz Windows/Linux verde em Java 21/25.
 - [x] hashes dos artifacts locais.
 - [ ] revisão independente de `qa_validator`.
 - [ ] aprovação final de @Balehlah.
@@ -87,9 +89,16 @@ instala Temurin 21 e 25 explicitamente; por isso o item permanece aberto e não
 
 ## Evidências remotas
 
-Os links do pull request, da execução da CI, dos três jobs e dos artifacts serão
-registrados após a publicação da branch. Cada job deve construir a distribuição
-e iniciar o pacote instalado, não apenas executar o classpath do Gradle.
+Os links da PR empilhada da #60, da execução final, dos dois jobs e dos
+artifacts serão registrados após a publicação da branch. Cada job deve
+construir a distribuição e iniciar o mesmo pacote instalado em Java 21/25, não
+apenas executar o classpath do Gradle.
+
+A execução histórica
+[`30476609058`](https://github.com/Balehlah/Engine_lite/actions/runs/30476609058)
+aprovou Ubuntu e falhou antes da aplicação no runner Windows por ausência de WGL.
+A Issue #60 substitui o contrato de plataforma e provisiona Mesa llvmpipe
+auditável para esse runner; a execução histórica não é tratada como verde.
 
 ## Defeitos, risco residual e rollback
 
@@ -101,11 +110,11 @@ classpath do launcher Windows e exclusão incorreta dos decoders JLayer/JOrbis.
 Riscos residuais não bloqueadores:
 
 - a evidência OpenAL com driver `null` não prova saída audível;
-- a matemática HiDPI 1×/1,25×/2× tem teste determinístico, mas Retina real será
-  observado no runner macOS;
+- a matemática HiDPI 1×/1,25×/2× permanece coberta por teste determinístico;
 - uma falha do filesystem enquanto o logger de `dispose` escreve evidência pode
   interromper o restante do relatório; o caminho verde libera todos os recursos.
 
-O rollback previsto remove somente `engine:gdx`, o launcher LWJGL3, assets,
-dependências e tasks do spike; o backend Java2D transitório e `engine:core`
-permanecem intactos.
+O rollback previsto para a #60 reverte sua PR empilhada sem tocar em Java2D. O
+rollback do spike remove somente `engine:gdx`, launcher LWJGL3, assets,
+dependências e tasks experimentais; o backend Java2D transitório e
+`engine:core` permanecem intactos.
