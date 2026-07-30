@@ -97,14 +97,20 @@ jobs:
           New-Item -ItemType Directory -Force -Path $reportDirectory | Out-Null
           $report = Join-Path $reportDirectory 'mesa-checksum-negative.log'
           $wrongHash = [string]::new('0', 64)
-          & pwsh -NoProfile -File .\.github\scripts\provision-mesa-windows.ps1 `
+          $negativeOutput = & pwsh -NoProfile -File `
+            .\.github\scripts\provision-mesa-windows.ps1 `
             -ArchivePath $env:ENGINE_LITE_MESA_ARCHIVE `
             -ExpectedArchiveSha256 $wrongHash `
             -VerifyArchiveOnly *>&1 | Tee-Object -FilePath $report
-          if ($LASTEXITCODE -eq 0) {
+          $negativeExitCode = $LASTEXITCODE
+          if ($negativeExitCode -eq 0) {
             throw 'Mesa provisioning accepted an intentionally incorrect checksum.'
           }
+          if (($negativeOutput -join "`n") -notmatch 'SHA-256 mismatch') {
+            throw 'Mesa negative verification failed for an unrelated reason.'
+          }
           Add-Content -LiteralPath $report -Value 'mesa.checksum.negative=PASS'
+          $global:LASTEXITCODE = 0
 
       - name: Smoke packaged ZIP on Java 21
         timeout-minutes: 5
