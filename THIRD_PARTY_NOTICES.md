@@ -12,7 +12,7 @@ beside Engine Lite's own JARs:
 
 | Components | Purpose | License | Origin |
 |---|---|---|---|
-| libGDX core, LWJGL3 backend and desktop natives | Cross-platform application, graphics, input, audio and asset APIs | Apache License 2.0 | <https://github.com/libgdx/libgdx> |
+| libGDX core, LWJGL3 backend and curated Windows/Linux desktop natives | Cross-platform application, graphics, input, audio and asset APIs | Apache License 2.0 | <https://github.com/libgdx/libgdx> |
 | gdx-jnigen-loader | Extraction and loading of libGDX native libraries | Apache License 2.0 | <https://github.com/libgdx/gdx-jnigen> |
 | LWJGL core and bindings | JVM bindings and native desktop runtime | BSD 3-Clause | <https://github.com/LWJGL/lwjgl3/tree/3.4.1> |
 | GLFW native bundled by LWJGL | Window, context and input integration | Zlib | <https://github.com/glfw/glfw/tree/3.4> |
@@ -25,6 +25,11 @@ beside Engine Lite's own JARs:
 The ZIP includes the complete license texts and pinned provenance record under
 `third_party/`. LWJGL's own `LICENSE.md` is the BSD 3-Clause text for LWJGL; it
 is not used as a substitute for the separately licensed native components.
+The upstream `gdx-platform-1.14.2-natives-desktop.jar` contains macOS payloads and is not shipped.
+The build verifies its pinned SHA-256 and produces
+a reproducible `natives-windows-linux` JAR with an exact entry allowlist,
+Apache-2.0 text and
+`third_party/gdx-platform-1.14.2-natives-desktop.provenance`.
 
 JLayer and JOrbis remain separate, unmodified JARs in the distribution. The
 LWJGL3 backend resolves their decoder types while constructing its audio
@@ -45,10 +50,17 @@ These components are not bundled into Engine Lite production JARs.
 |---|---|---|---|
 | Gradle Wrapper | Downloads and starts the pinned Gradle distribution | Apache License 2.0 | <https://github.com/gradle/gradle> |
 | Eclipse Temurin JDK 21 and 25 | Build and compatibility toolchains | GPL-2.0-only with Classpath Exception 2.0 | <https://adoptium.net/temurin/> |
+| Mesa llvmpipe 26.1.1 for Windows CI | Creates a software WGL context on the ephemeral GitHub runner | Core MIT with per-file SPDX licenses | <https://github.com/pal1000/mesa-dist-win/releases/tag/26.1.1> |
 
 The downloaded Gradle distribution is build tooling, not part of Engine Lite
 artifacts, and carries its own license and notice files. The JDKs compile and
 run the build; they are not bundled into Engine Lite JARs.
+Mesa is downloaded from the release and commit pinned in
+`.github/scripts/provision-mesa-windows.ps1`; the archive and both extracted
+DLLs must match their fixed SHA-256 values. Only `x64/opengl32.dll` and
+`x64/libgallium_wgl.dll` are copied into the ephemeral Java 21/25 homes under
+`RUNNER_TOOL_CACHE`. Neither DLL, the archive nor its extraction directory is
+uploaded or included in the distribution.
 
 ## Continuous-integration actions
 

@@ -122,7 +122,7 @@ gradlew.bat projects
 gradlew.bat verifyDistribution
 ```
 
-No Linux/macOS:
+No Linux:
 
 ```bash
 ./gradlew clean test
@@ -168,8 +168,10 @@ gradlew.bat smokeSpikeDistribution -PspikeSmokeVariant=local-java21
 ```
 
 O ZIP fica em `desktop/build/distributions/`. Logs, screenshots e o manifesto
-SHA-256 ficam em `desktop/build/reports/spike/`. A CI repete o smoke do pacote
-em Java 21 e 25 nos runners Windows, Linux e macOS. Consulte a
+SHA-256 ficam em `desktop/build/reports/spike/`. A CI repete o smoke do mesmo
+pacote em Java 21 e 25 nos runners Windows e Linux. O runner Windows usa Mesa
+llvmpipe fixado e verificado somente durante o job; esses DLLs não entram no
+ZIP. Consulte a
 [especificação do spike](docs/spikes/libgdx-lwjgl3.md) e o
 [registro de validação](docs/validation/issue-14.md).
 
@@ -241,7 +243,7 @@ public class MeuJogo extends Game {
 
 ### Contratos de fundação
 
-- Desktop suportado: Windows, Linux e macOS.
+- Desktop suportado: Windows e Linux.
 - Runtime baseline: Java 21 LTS; compatibilidade adicional em Java 25 LTS.
 - Viewport virtual provisório: 320×180, nearest-neighbor e escala inteira.
 - API estável futura: `engine.api.*`.
@@ -297,7 +299,7 @@ ColorPalette.CGA
 
 - Java 21 LTS
 - Java 25 LTS é uma linha adicional de compatibilidade, não a baseline
-- Windows, Linux ou macOS
+- Windows ou Linux
 - libGDX 1.14.2 e LWJGL 3.4.1 são resolvidos pelo Gradle Wrapper somente para
   o spike experimental
 

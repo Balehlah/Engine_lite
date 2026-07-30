@@ -1,5 +1,8 @@
 # Evidências de validação — Issue #10
 
+> Registro histórico fechado. Referências à matriz vigente na data desta
+> validação foram substituídas por D-010/ADR-006.
+
 - Data: 2026-07-25
 - Branch: `codex/issue-10-gradle-modules`
 - Base consumida: `645efcf` (entrega fechada da Issue #9)

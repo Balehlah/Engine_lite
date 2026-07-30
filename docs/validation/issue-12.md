@@ -1,5 +1,8 @@
 # Evidências de validação — Issue #12
 
+> Registro histórico fechado da matriz original. D-010/ADR-006 substitui o
+> contrato atual sem apagar jobs, artifacts ou resultados desta evidência.
+
 - Data: 2026-07-27
 - Branch: `codex/issue-12-desktop-ci`
 - Base consumida: `2dc46f7` (Issues #10 e #11 integradas em `main`)

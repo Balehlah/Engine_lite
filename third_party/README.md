@@ -8,6 +8,7 @@ packaged as `licenses/Apache-2.0.txt`.
 | Component | Version or provenance | License | Corresponding source | Packaged text |
 |---|---|---|---|---|
 | libGDX core and LWJGL3 backend | 1.14.2 | Apache-2.0 | <https://github.com/libgdx/libgdx/tree/1.14.2> | `licenses/Apache-2.0.txt` |
+| Curated libGDX Windows/Linux desktop natives | 1.14.2; source SHA-256 `f4847981d27c6524a30f5665036ec8c11f48c8eda7610bb63f742de95ffe1970` | Apache-2.0 | <https://repo1.maven.org/maven2/com/badlogicgames/gdx/gdx-platform/1.14.2/> | `licenses/Apache-2.0.txt`; `gdx-platform-1.14.2-natives-desktop.provenance` |
 | gdx-jnigen-loader | 2.5.2 | Apache-2.0 | <https://github.com/libgdx/gdx-jnigen/tree/2.5.2> | `licenses/Apache-2.0.txt` |
 | LWJGL bindings and core natives | 3.4.1 | BSD-3-Clause | <https://github.com/LWJGL/lwjgl3/tree/3.4.1> | `licenses/LWJGL-BSD-3-Clause.txt` |
 | GLFW native bundled by LWJGL | GLFW 3.4 baseline; LWJGL binary marker `9352d8fe93cd443be18157abe81f16500549aec0` | Zlib | <https://github.com/glfw/glfw/tree/3.4> | `licenses/GLFW-Zlib.txt` |
@@ -22,8 +23,10 @@ backend resolves their types during construction before the PCM WAV probe is
 created. Removing either JAR makes backend initialization fall back to
 `MockAudio`, which this spike deliberately rejects.
 
-The libraries remain separate, unmodified JARs and native binaries under
-`lib/`. A compatible rebuilt OpenAL Soft native can replace the corresponding
-`lwjgl-openal-3.4.1-natives-<platform>.jar`; reverse engineering for debugging
-such modifications is permitted. The same separate-library replacement right
-applies to JLayer and JOrbis.
+Except for the explicitly documented libGDX native curation, the libraries
+remain separate, unmodified JARs and native binaries under `lib/`. The curated
+JAR copies the Windows/Linux payload bytes unchanged. The two `.dylib` entries are excluded
+from the distribution. A compatible rebuilt OpenAL Soft native can replace the
+corresponding `lwjgl-openal-3.4.1-natives-<platform>.jar`; reverse engineering
+for debugging such modifications is permitted. The same separate-library
+replacement right applies to JLayer and JOrbis.

@@ -4,13 +4,15 @@
 - Branch: `codex/issue-14-libgdx-lwjgl3-spike`
 - Base consumida: `9de87d9`
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
-- Estado: gates locais concluídos; matriz remota e decisão final pendentes
+- Estado: gates locais, matriz remota e revisão independente concluídos;
+  integração da Issue #60 e decisão final pendentes
 
 ## Gate de entrada
 
 - [x] #10 fechada em 2026-07-25.
 - [x] #12 fechada em 2026-07-27.
 - [x] #13 fechada em 2026-07-29.
+- [ ] #60 integrada ao branch do spike.
 - [x] Baseline local anterior à implementação:
   `gradlew.bat --no-daemon clean test -PtestRandomSeed=1414
   -PisolatedBuildRoot=C:\tmp\engine-lite-issue14-baseline`.
@@ -23,15 +25,15 @@ checkout principal foi preservada fora desta worktree.
 
 - [x] `clean test` final no Java 21.
 - [x] testes determinísticos da escala inteira e descarte.
-- [ ] compatibilidade Java 25.
+- [x] compatibilidade Java 25.
 - [x] distribuição reproduzível.
 - [x] execução do pacote a partir de CWD externo.
 - [x] smoke gráfico local autoencerrável.
 - [x] três PNGs com as fixtures da ADR-002.
 - [x] logs de lifecycle, input, asset, áudio, Tiled e dispose.
-- [ ] matriz Windows/Linux/macOS verde.
+- [x] matriz Windows/Linux verde em Java 21/25.
 - [x] hashes dos artifacts locais.
-- [ ] revisão independente de `qa_validator`.
+- [x] revisão independente de `qa_validator`.
 - [ ] aprovação final de @Balehlah.
 
 ## Evidências locais
@@ -82,14 +84,48 @@ Uma segunda build em `C:\tmp\engine-lite-issue14-repro` produziu o mesmo hash.
 
 A tentativa local de `java25CompatibilityTest` não iniciou porque esta máquina
 não possui JDK 25 e o build não habilita download implícito de toolchains. A CI
-instala Temurin 21 e 25 explicitamente; por isso o item permanece aberto e não
-é inferido a partir do Java 21.
+instalou Temurin 21 e 25 explicitamente e fechou o item com execução real, sem
+inferir compatibilidade a partir do Java 21.
 
 ## Evidências remotas
 
-Os links do pull request, da execução da CI, dos três jobs e dos artifacts serão
-registrados após a publicação da branch. Cada job deve construir a distribuição
-e iniciar o pacote instalado, não apenas executar o classpath do Gradle.
+A implementação da #60 foi publicada na PR empilhada
+[#61](https://github.com/Balehlah/Engine_lite/pull/61). A execução
+[`30554662980`](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980)
+aprovou os jobs
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/job/90911919800)
+e
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/job/90911919770)
+em Java 21/25.
+
+Cada job construiu a distribuição e iniciou o mesmo pacote instalado a partir
+de CWD externo nos dois JDKs, em vez de executar o classpath do Gradle. Os
+artifacts de distribuição/evidências estão preservados para
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764391986)
+e
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764399932).
+Os relatórios de teste estão preservados para
+[Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764390426)
+e
+[Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30554662980/artifacts/8764399139).
+
+Os quatro smokes registraram lifecycle, três viewports/goldens, input, assets,
+OpenAL, Tiled e descarte exato de nove recursos. O mesmo ZIP foi produzido nos
+dois runners e permaneceu intacto antes/depois de todos os smokes:
+`9f9b53677c975233ebc72ad3d4f457e670e4f05419c6f6e749eff86a193f8d15`.
+No Windows, Java 21 e 25 reportaram
+`llvmpipe (LLVM 22.1.6, 256 bits)` com Mesa 26.1.1 fixado e auditado.
+
+O `qa_validator` independente confrontou a matriz, os quatro artifacts, 14
+entradas de manifesto por smoke, estrutura interna do ZIP/JARs, notices e
+proveniência. Também repetiu o gate local completo com seed `6061`. O parecer
+foi **PASS, zero defeitos bloqueadores**.
+
+A execução histórica
+[`30476609058`](https://github.com/Balehlah/Engine_lite/actions/runs/30476609058)
+aprovou Ubuntu e falhou antes da aplicação no runner Windows por ausência de WGL.
+A Issue #60 substitui o contrato de plataforma e provisiona Mesa llvmpipe
+auditável para esse runner; a execução histórica não é tratada como verde.
 
 ## Defeitos, risco residual e rollback
 
@@ -101,11 +137,11 @@ classpath do launcher Windows e exclusão incorreta dos decoders JLayer/JOrbis.
 Riscos residuais não bloqueadores:
 
 - a evidência OpenAL com driver `null` não prova saída audível;
-- a matemática HiDPI 1×/1,25×/2× tem teste determinístico, mas Retina real será
-  observado no runner macOS;
+- a matemática HiDPI 1×/1,25×/2× permanece coberta por teste determinístico;
 - uma falha do filesystem enquanto o logger de `dispose` escreve evidência pode
   interromper o restante do relatório; o caminho verde libera todos os recursos.
 
-O rollback previsto remove somente `engine:gdx`, o launcher LWJGL3, assets,
-dependências e tasks do spike; o backend Java2D transitório e `engine:core`
-permanecem intactos.
+O rollback previsto para a #60 reverte sua PR empilhada sem tocar em Java2D. O
+rollback do spike remove somente `engine:gdx`, launcher LWJGL3, assets,
+dependências e tasks experimentais; o backend Java2D transitório e
+`engine:core` permanecem intactos.

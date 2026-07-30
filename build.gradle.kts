@@ -12,6 +12,8 @@ import org.gradle.api.tasks.testing.TestReport
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.jvm.toolchain.JavaToolchainService
 import java.nio.file.Files
+import java.security.MessageDigest
+import java.util.HexFormat
 import java.util.jar.JarFile
 import java.util.zip.ZipFile
 
@@ -20,6 +22,28 @@ plugins {
 }
 
 val engineVersion = providers.gradleProperty("engineVersion").get()
+val gdxVersion = providers.gradleProperty("gdxVersion").get()
+val lwjglVersion = providers.gradleProperty("lwjglVersion").get()
+
+fun sha256(file: File): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    file.inputStream().buffered().use { input ->
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        while (true) {
+            val count = input.read(buffer)
+            if (count < 0) {
+                break
+            }
+            digest.update(buffer, 0, count)
+        }
+    }
+    return HexFormat.of().formatHex(digest.digest())
+}
+
+fun sha256(bytes: ByteArray): String =
+    HexFormat.of().formatHex(
+        MessageDigest.getInstance("SHA-256").digest(bytes),
+    )
 
 providers.gradleProperty("isolatedBuildRoot").orNull?.let { configuredRoot ->
     val isolatedBuildRoot = file(configuredRoot)
@@ -243,6 +267,7 @@ val generateDependencyLicenseReport = tasks.register("generateDependencyLicenseR
             "runtimeClasspath",
             "testRuntimeClasspath",
             "legacyRuntimeClasspath",
+            "gdxDesktopNativesSource",
         )
         val resolvedModules = allprojects
             .flatMap { candidateProject ->
@@ -533,6 +558,122 @@ val inspectJars = tasks.register("inspectJars") {
 
 val distributionVerificationReport =
     layout.buildDirectory.file("reports/distribution/verification.txt")
+val historicalMacOsAllowlist =
+    layout.projectDirectory.file("gradle/macos-historical-allowlist.txt")
+val supportedDesktopReferenceReport =
+    layout.buildDirectory.file("reports/platform/macos-reference-audit.txt")
+
+val verifySupportedDesktopReferences = tasks.register("verifySupportedDesktopReferences") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description =
+        "Rejects current documentation that promises the superseded desktop platform."
+    val documentation = fileTree(layout.projectDirectory) {
+        include("*.md", "docs/**/*.md", "third_party/**/*.md")
+        exclude("**/build/**", "**/.gradle/**")
+    }
+    inputs.files(documentation, historicalMacOsAllowlist)
+    outputs.file(supportedDesktopReferenceReport)
+    outputs.upToDateWhen { false }
+
+    doLast {
+        val historicalReferences = historicalMacOsAllowlist.asFile
+            .readLines(Charsets.UTF_8)
+            .asSequence()
+            .map(String::trim)
+            .filter { it.isNotEmpty() && !it.startsWith("#") }
+            .map { line ->
+                val fields = line.split('|').map(String::trim)
+                check(fields.size == 3) {
+                    "Invalid historical platform allowlist row: $line"
+                }
+                fields
+            }
+            .toList()
+        historicalReferences.forEach { reference ->
+            val file = layout.projectDirectory.file(reference[0]).asFile
+            check(file.isFile) {
+                "Historical platform allowlist points to a missing file: ${reference[0]}"
+            }
+            if (reference[1] != "*") {
+                check(
+                    file.readLines(Charsets.UTF_8).any {
+                        it.contains(reference[1])
+                    },
+                ) {
+                    "Historical marker ${reference[1]} is missing from ${reference[0]}."
+                }
+            }
+        }
+
+        val historicalByPath = historicalReferences.groupBy { it[0] }
+        val restrictedReference = Regex(
+            """(?i)macos|natives-macos|\.dylib|xstartonfirstthread|três sistemas operacionais""",
+        )
+        val negativeContractTerms = listOf(
+            "não suport",
+            "substitu",
+            "remov",
+            "exclu",
+            "ausência",
+            "proibid",
+            "não entra",
+            "não é",
+            "upstream",
+            "absent",
+            "forbidden",
+            "exclude",
+            "must not",
+            "does not",
+            "not ship",
+        )
+        val findings = mutableListOf<String>()
+        val violations = mutableListOf<String>()
+        documentation.files.sortedBy(File::invariantSeparatorsPath).forEach { file ->
+            val relativePath = file.relativeTo(projectDir).invariantSeparatorsPath
+            file.readLines(Charsets.UTF_8).forEachIndexed { index, line ->
+                if (!restrictedReference.containsMatchIn(line)) {
+                    return@forEachIndexed
+                }
+                val historical = historicalByPath[relativePath].orEmpty().any {
+                    it[1] == "*" || line.contains(it[1])
+                }
+                val negativeContract = negativeContractTerms.any {
+                    line.contains(it, ignoreCase = true)
+                }
+                val classification = when {
+                    historical -> "historical"
+                    negativeContract -> "negative-contract"
+                    else -> "VIOLATION"
+                }
+                findings += "$relativePath:${index + 1}|$classification|${line.trim()}"
+                if (!historical && !negativeContract) {
+                    violations += "$relativePath:${index + 1}: ${line.trim()}"
+                }
+            }
+        }
+        check(violations.isEmpty()) {
+            "Current documentation contains an unsupported platform promise:\n" +
+                violations.joinToString("\n")
+        }
+
+        val report = supportedDesktopReferenceReport.get().asFile
+        report.parentFile.mkdirs()
+        report.writeText(
+            buildString {
+                appendLine("Engine Lite desktop platform reference audit")
+                appendLine("current-supported=Windows,Linux")
+                appendLine("historical-allowlist=${historicalReferences.size}")
+                appendLine("violations=0")
+                findings.forEach { appendLine(it) }
+            },
+            Charsets.UTF_8,
+        )
+        logger.lifecycle(
+            "Verified current Windows/Linux documentation; historical references: " +
+                historicalReferences.size,
+        )
+    }
+}
 
 val verifyDistribution = tasks.register("verifyDistribution") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
@@ -540,6 +681,7 @@ val verifyDistribution = tasks.register("verifyDistribution") {
     dependsOn(
         generateDependencyLicenseReport,
         verifyAssetAttribution,
+        verifySupportedDesktopReferences,
         ":engine:core:apiCheck",
         ":desktop:buildSpikeDistribution",
         inspectJars,
@@ -568,6 +710,12 @@ val verifyDistribution = tasks.register("verifyDistribution") {
             .archiveFile
             .get()
             .asFile
+        val curatedGdxNativesJar = desktopProject.tasks
+            .named<Jar>("curateGdxDesktopNatives")
+            .get()
+            .archiveFile
+            .get()
+            .asFile
 
         val requiredInstalledFiles = setOf(
             "LICENSE",
@@ -586,6 +734,7 @@ val verifyDistribution = tasks.register("verifyDistribution") {
             "bin/$spikeApplicationName.bat",
             "lib/${desktopJar.name}",
             "lib/${engineGdxJar.name}",
+            "lib/${curatedGdxNativesJar.name}",
         )
         val installedFiles = installDirectory
             .walkTopDown()
@@ -622,12 +771,19 @@ val verifyDistribution = tasks.register("verifyDistribution") {
         ) {
             "Installed distribution is missing the libGDX LWJGL3 backend."
         }
-        check(
-            installedFiles.any {
-                it.startsWith("lib/gdx-platform-") && it.endsWith("-natives-desktop.jar")
-            },
-        ) {
-            "Installed distribution is missing libGDX desktop natives."
+        val originalGdxDesktopNatives = installedFiles.filter {
+            it.startsWith("lib/gdx-platform-") && it.endsWith("-natives-desktop.jar")
+        }
+        check(originalGdxDesktopNatives.isEmpty()) {
+            "The uncurated libGDX desktop native JAR must not be distributed: " +
+                originalGdxDesktopNatives
+        }
+        val curatedGdxNatives = installedFiles.filter {
+            it == "lib/gdx-platform-$gdxVersion-natives-windows-linux.jar"
+        }
+        check(curatedGdxNatives.size == 1) {
+            "Installed distribution must contain exactly one curated libGDX native JAR: " +
+                curatedGdxNatives
         }
         check(
             installedFiles.any {
@@ -644,28 +800,29 @@ val verifyDistribution = tasks.register("verifyDistribution") {
             "lwjgl-opengl",
             "lwjgl-stb",
         )
-        val requiredNativePlatforms = listOf(
+        val requiredNativePlatforms = setOf(
             "natives-linux",
-            "natives-macos",
+            "natives-linux-arm32",
+            "natives-linux-arm64",
             "natives-windows",
+            "natives-windows-x86",
         )
-        val missingLwjglNatives = requiredLwjglModules.flatMap { module ->
-            requiredNativePlatforms.mapNotNull { classifier ->
-                val prefix = "lib/$module-"
-                if (
-                    installedFiles.any {
-                        it.startsWith(prefix) &&
-                            it.endsWith("-$classifier.jar")
-                    }
-                ) {
-                    null
-                } else {
-                    "$module:$classifier"
-                }
+        val invalidLwjglNativeSets = requiredLwjglModules.mapNotNull { module ->
+            val prefix = "lib/$module-$lwjglVersion-"
+            val classifiers = installedFiles
+                .filter { it.startsWith(prefix) && it.endsWith(".jar") }
+                .map { it.removePrefix(prefix).removeSuffix(".jar") }
+                .filter { it.startsWith("natives-") }
+                .toSet()
+            if (classifiers == requiredNativePlatforms) {
+                null
+            } else {
+                "$module expected=$requiredNativePlatforms observed=$classifiers"
             }
         }
-        check(missingLwjglNatives.isEmpty()) {
-            "Installed distribution is missing LWJGL natives: $missingLwjglNatives"
+        check(invalidLwjglNativeSets.isEmpty()) {
+            "Installed distribution has an invalid LWJGL native inventory: " +
+                invalidLwjglNativeSets
         }
 
         val unixLauncher = installDirectory.resolve("bin/$spikeApplicationName")
@@ -678,27 +835,99 @@ val verifyDistribution = tasks.register("verifyDistribution") {
         ) {
             "Both installed launchers must enable native access for LWJGL."
         }
-        if (System.getProperty("os.name").startsWith("Mac", ignoreCase = true)) {
-            check(
-                unixLauncher.readText(Charsets.UTF_8)
-                    .contains("-XstartOnFirstThread"),
-            ) {
-                "The macOS distribution launcher must start LWJGL on the first thread."
+        check(
+            !unixLauncher.readText(Charsets.UTF_8).contains("-XstartOnFirstThread") &&
+                !windowsLauncher.readText(Charsets.UTF_8).contains("-XstartOnFirstThread"),
+        ) {
+            "Platform-specific macOS launcher flags must not be distributed."
+        }
+
+        val forbiddenDistributedFiles = installedFiles.filter { path ->
+            val normalized = path.lowercase()
+            val fileName = normalized.substringAfterLast('/')
+            normalized.contains("natives-macos") ||
+                normalized.endsWith(".dylib") ||
+                fileName == "opengl32.dll" ||
+                fileName == "libgallium_wgl.dll"
+        }
+        check(forbiddenDistributedFiles.isEmpty()) {
+            "Distribution contains forbidden macOS or Mesa files: $forbiddenDistributedFiles"
+        }
+        val jarPayloads = installedFiles
+            .filter { it.startsWith("lib/") && it.endsWith(".jar") }
+            .associateWith { path ->
+                ZipFile(installDirectory.resolve(path)).use { archive ->
+                    archive.entries().asSequence()
+                        .filterNot { it.isDirectory }
+                        .map { it.name }
+                        .toSet()
+                }
             }
+        val forbiddenJarPayloads = jarPayloads.flatMap { (jar, entries) ->
+            entries.filter { entry ->
+                val normalized = entry.lowercase()
+                normalized.contains("natives-macos") ||
+                    normalized.endsWith(".dylib") ||
+                    normalized.endsWith("opengl32.dll") ||
+                    normalized.endsWith("libgallium_wgl.dll")
+            }.map { entry -> "$jar!/$entry" }
+        }
+        check(forbiddenJarPayloads.isEmpty()) {
+            "Distribution JARs contain forbidden macOS or Mesa payloads: " +
+                forbiddenJarPayloads
+        }
+        val curatedPayload = jarPayloads.getValue(
+            "lib/gdx-platform-$gdxVersion-natives-windows-linux.jar",
+        ).filterNot { it.startsWith("META-INF/") }.toSet()
+        val expectedCuratedPayload = setOf(
+            "gdx.dll",
+            "gdx64.dll",
+            "libgdx64.so",
+            "libgdxarm.so",
+            "libgdxarm64.so",
+            "libgdxriscv64.so",
+        )
+        check(curatedPayload == expectedCuratedPayload) {
+            "Curated libGDX native JAR differs from its Windows/Linux allowlist: " +
+                curatedPayload
         }
 
         check(zip.isFile && zip.length() > 0L) {
             "Distribution ZIP was not produced: $zip"
         }
-        val zipEntries = ZipFile(zip).use { archive ->
-            archive.entries().asSequence().map { it.name }.toSet()
+        val zipRoot = "${zip.name.removeSuffix(".zip")}/"
+        val zipFileHashes = ZipFile(zip).use { archive ->
+            archive.entries().asSequence()
+                .filterNot { it.isDirectory }
+                .associate { entry ->
+                    check(entry.name.startsWith(zipRoot)) {
+                        "ZIP entry escapes the expected distribution root: ${entry.name}"
+                    }
+                    entry.name.removePrefix(zipRoot) to
+                        archive.getInputStream(entry).use { sha256(it.readBytes()) }
+                }
         }
+        val zipEntries = zipFileHashes.keys.map { "$zipRoot$it" }.toSet()
         val requiredZipSuffixes = requiredInstalledFiles.map { "/$it" }.toSet()
         val missingZipFiles = requiredZipSuffixes.filterNot { suffix ->
             zipEntries.any { it.endsWith(suffix) }
         }
         check(missingZipFiles.isEmpty()) {
             "Distribution ZIP is missing: $missingZipFiles"
+        }
+        check(zipFileHashes.keys == installedFiles) {
+            "ZIP and installed distribution inventories differ. ZIP-only: " +
+                "${zipFileHashes.keys - installedFiles}; installed-only: " +
+                "${installedFiles - zipFileHashes.keys}"
+        }
+        val installedFileHashes = installedFiles.associateWith { path ->
+            sha256(installDirectory.resolve(path))
+        }
+        val mismatchedZipPayloads = installedFiles.filter { path ->
+            zipFileHashes.getValue(path) != installedFileHashes.getValue(path)
+        }
+        check(mismatchedZipPayloads.isEmpty()) {
+            "ZIP payloads differ from the verified installed files: $mismatchedZipPayloads"
         }
 
         val reportFile = distributionVerificationReport.get().asFile
@@ -717,9 +946,20 @@ val verifyDistribution = tasks.register("verifyDistribution") {
                 appendLine("third-party-license-texts=present")
                 appendLine("audio-decoders=present")
                 appendLine("libgdx-backend=present")
-                appendLine("desktop-natives=present")
+                appendLine("desktop-natives=curated-windows-linux")
+                appendLine(
+                    "desktop-natives-source-sha256=" +
+                        "f4847981d27c6524a30f5665036ec8c11f48c8eda7610bb63f742de95ffe1970",
+                )
+                appendLine(
+                    "desktop-natives-curated-sha256=" +
+                        sha256(curatedGdxNativesJar),
+                )
                 appendLine("lwjgl-runtime=present")
-                appendLine("lwjgl-linux-macos-windows-natives=present")
+                appendLine("lwjgl-linux-windows-natives=exact")
+                appendLine("macos-natives=absent")
+                appendLine("mesa-runtime=absent")
+                appendLine("zip-installed-byte-parity=present")
                 appendLine("native-access-enabled=true")
             },
             Charsets.UTF_8,
@@ -1007,6 +1247,18 @@ val smokeSpikeDistribution = tasks.register("smokeSpikeDistribution") {
     description =
         "Runs the installed spike package from an external CWD and hashes its evidence."
     dependsOn(":desktop:generateSpikeEvidenceManifest")
+}
+
+tasks.register("recordSpikeDistributionHash") {
+    group = "distribution"
+    description = "Records the canonical ZIP SHA-256 before the Java 21/25 smokes."
+    dependsOn(":desktop:recordSpikeDistributionHash")
+}
+
+tasks.register("verifySpikeDistributionHash") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = "Verifies the canonical ZIP SHA-256 after the Java 21/25 smokes."
+    dependsOn(":desktop:verifySpikeDistributionHash")
 }
 
 tasks.register("spikeDistribution") {

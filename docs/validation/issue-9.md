@@ -1,5 +1,8 @@
 # Evidências de validação — Issue #9
 
+> Registro histórico fechado. O contrato de plataformas validado nesta issue
+> foi substituído por D-010/ADR-006 sem alterar esta evidência.
+
 - Data: 2026-07-24
 - Responsável: [@Balehlah](https://github.com/Balehlah)
   (`technical-coordinator`)

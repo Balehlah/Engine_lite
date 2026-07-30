@@ -31,10 +31,6 @@ jobs:
             runner: windows-2025
             gradle: .\gradlew.bat
             seed: 1202
-          - name: macOS
-            runner: macos-15-intel
-            gradle: ./gradlew
-            seed: 1203
 
     steps:
       - name: Checkout sources
@@ -81,17 +77,61 @@ jobs:
 
       - name: Build and verify packaged distribution
         timeout-minutes: 10
-        run: ${{ matrix.gradle }} --no-daemon --stacktrace buildSpikeDistribution verifyDistribution
+        run: >-
+          ${{ matrix.gradle }} --no-daemon --stacktrace
+          buildSpikeDistribution verifyDistribution recordSpikeDistributionHash
+
+      - name: Provision pinned Mesa llvmpipe for Windows JDKs
+        if: matrix.name == 'Windows'
+        shell: pwsh
+        run: |
+          & .\.github\scripts\provision-mesa-windows.ps1 `
+            -JavaHomes @($env:JAVA_HOME, $env:JAVA_HOME_25_X64) `
+            -EnvironmentFile $env:GITHUB_ENV
+
+      - name: Prove Mesa checksum rejection
+        if: matrix.name == 'Windows'
+        shell: pwsh
+        run: |
+          $reportDirectory = 'build\reports\distribution'
+          New-Item -ItemType Directory -Force -Path $reportDirectory | Out-Null
+          $report = Join-Path $reportDirectory 'mesa-checksum-negative.log'
+          $wrongHash = [string]::new('0', 64)
+          $negativeOutput = & pwsh -NoProfile -File `
+            .\.github\scripts\provision-mesa-windows.ps1 `
+            -ArchivePath $env:ENGINE_LITE_MESA_ARCHIVE `
+            -ExpectedArchiveSha256 $wrongHash `
+            -VerifyArchiveOnly *>&1 | Tee-Object -FilePath $report
+          $negativeExitCode = $LASTEXITCODE
+          if ($negativeExitCode -eq 0) {
+            throw 'Mesa provisioning accepted an intentionally incorrect checksum.'
+          }
+          if (($negativeOutput -join "`n") -notmatch 'SHA-256 mismatch') {
+            throw 'Mesa negative verification failed for an unrelated reason.'
+          }
+          Add-Content -LiteralPath $report -Value 'mesa.checksum.negative=PASS'
+          $global:LASTEXITCODE = 0
 
       - name: Smoke packaged ZIP on Java 21
         timeout-minutes: 5
+        env:
+          ENGINE_LITE_REQUIRE_LLVMPIPE: "${{ matrix.name == 'Windows' }}"
+          GALLIUM_DRIVER: "${{ matrix.name == 'Windows' && 'llvmpipe' || '' }}"
+          LIBGL_ALWAYS_SOFTWARE: "${{ matrix.name == 'Windows' && '1' || '' }}"
         run: ${{ matrix.gradle }} --no-daemon --stacktrace smokeSpikeDistribution -PspikeSmokeVariant=java21
 
       - name: Smoke packaged ZIP on Java 25
         timeout-minutes: 5
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_25_X64 }}
+          ENGINE_LITE_REQUIRE_LLVMPIPE: "${{ matrix.name == 'Windows' }}"
+          GALLIUM_DRIVER: "${{ matrix.name == 'Windows' && 'llvmpipe' || '' }}"
+          LIBGL_ALWAYS_SOFTWARE: "${{ matrix.name == 'Windows' && '1' || '' }}"
         run: ${{ matrix.gradle }} --no-daemon --stacktrace smokeSpikeDistribution -PspikeSmokeVariant=java25
+
+      - name: Verify canonical ZIP remained unchanged
+        timeout-minutes: 5
+        run: ${{ matrix.gradle }} --no-daemon --stacktrace verifySpikeDistributionHash
 
       - name: Upload JUnit and HTML reports
         if: always()

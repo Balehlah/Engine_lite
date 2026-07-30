@@ -23,9 +23,9 @@ do programa permanece na
 | 1 | [#9 — Decisões e ADRs](https://github.com/Balehlah/Engine_lite/issues/9) | Aprovação explícita do mantenedor | Decisões rastreáveis, ADR-002 mensurável, política da 1.0.0 e pacotes definidos |
 | 2 | [#10 — Gradle, toolchain e módulos](https://github.com/Balehlah/Engine_lite/issues/10) | #9 fechada | Java 21, módulos e build reproduzível; smoke de compatibilidade em Java 25 |
 | 3 | [#11 — Baseline e regressões](https://github.com/Balehlah/Engine_lite/issues/11) | Contrato de build suficiente | Comportamento do protótipo capturado por testes |
-| 4 | [#12 — CI multiplataforma](https://github.com/Balehlah/Engine_lite/issues/12) | Build reproduzível | Windows, Linux e macOS verdes |
+| 4 | [#12 — CI multiplataforma](https://github.com/Balehlah/Engine_lite/issues/12) | Build reproduzível | Baseline histórica concluída; contrato de plataforma substituído pela D-010 |
 | 5 | [#13 — Licença, SemVer e API](https://github.com/Balehlah/Engine_lite/issues/13) | #9 e #10 fechadas | Apache-2.0 aplicado, inventários presentes e baseline de API funcionando |
-| 6 | [#14 — Spike libGDX/LWJGL3](https://github.com/Balehlah/Engine_lite/issues/14) | #10, #12 e #13 fechadas | ADR-002 aceita ou rejeitada com matriz completa e fallback preservado |
+| 6 | [#14 — Spike libGDX/LWJGL3](https://github.com/Balehlah/Engine_lite/issues/14) | #10, #12 e #13 fechadas; #60 integrada | ADR-002 aceita ou rejeitada com matriz Windows/Linux completa e fallback preservado |
 
 ## Contratos que desbloqueiam o restante
 
@@ -33,7 +33,7 @@ do programa permanece na
 - A API estável só existe após a baseline da Issue #13.
 - Trabalho dependente de GPU aguarda a decisão final da ADR-002.
 - O viewport de referência é 320×180 até a Issue #22 concluir seus testes.
-- Packaging e release devem cobrir Windows, Linux e macOS.
+- Packaging e release devem cobrir Windows e Linux, conforme D-010/ADR-006.
 
 ## Release 1.0.0
 

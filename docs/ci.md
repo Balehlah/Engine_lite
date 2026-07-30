@@ -1,16 +1,15 @@
 # Integração contínua desktop
 
-O workflow [`build.yml`](../.github/workflows/build.yml) é o gate inicial de
-build e testes para pull requests, merge queue e pushes em `main`. Ele produz
-três checks independentes:
+O workflow [`build.yml`](../.github/workflows/build.yml) é o gate de build,
+testes, pacote e smoke para pull requests, merge queue e pushes em `main`.
+Conforme D-010/ADR-006, ele produz somente dois checks independentes:
 
 - `Build and test (Ubuntu)`;
-- `Build and test (Windows)`;
-- `Build and test (macOS)`.
+- `Build and test (Windows)`.
 
-A matriz usa runners x64 nativos (`ubuntu-24.04`, `windows-2025` e
-`macos-15-intel`), `fail-fast: false` e timeout de 30 minutos por sistema. Assim,
-uma falha não oculta o resultado nem os relatórios dos outros sistemas.
+A matriz usa runners x64 nativos (`ubuntu-24.04` e `windows-2025`),
+`fail-fast: false` e timeout de 30 minutos por sistema. Uma falha não oculta o
+resultado nem as evidências do outro sistema.
 
 ## Contrato do gate
 
@@ -18,105 +17,106 @@ Cada check:
 
 1. instala Temurin 21 e 25;
 2. valida o `gradle-wrapper.jar` pelo `gradle/actions/setup-gradle`;
-3. registra nos logs o sistema, a arquitetura, a imagem do runner, a revisão
-   Git, o JDK ativo e a versão do Gradle Wrapper;
-4. executa `clean test` com Java 21 e uma seed própria;
-5. executa `java25CompatibilityTest`, que mantém o bytecode em Java 21 e inicia
-   os testes em Java 25;
-6. valida baseline/API, licenças, assets e conteúdo dos JARs como parte de
-   `clean test`;
-7. constrói e verifica a árvore instalada e o ZIP canônico do spike;
-8. extrai e executa o ZIP a partir de CWD externo, primeiro em Java 21 e depois
-   em Java 25, com Xvfb no Linux e `-XstartOnFirstThread` no macOS;
-9. valida as três capturas de viewport, o backend OpenAL Soft `null`, lifecycle,
-   input, assets, Tiled, descarte e hashes SHA-256;
-10. publica relatórios e o pacote com suas evidências em artifacts separados
-    por sistema.
+3. registra sistema, arquitetura, imagem, revisão, JDK e Wrapper;
+4. executa `clean test` com Java 21 e seed própria;
+5. executa `java25CompatibilityTest` mantendo bytecode Java 21;
+6. valida API, licenças, assets, JARs e distribuição;
+7. constrói o ZIP canônico e registra seu SHA-256 antes dos smokes;
+8. extrai e executa esse ZIP a partir de CWD externo em Java 21 e 25;
+9. valida as três capturas de viewport, OpenAL Soft `null`, lifecycle, input,
+   assets, Tiled, descarte e manifestos SHA-256;
+10. confirma que o SHA-256 do ZIP continua idêntico depois dos dois smokes;
+11. publica relatórios e pacote/evidências em artifacts por sistema.
 
-O workflow chama exclusivamente `gradlew`/`gradlew.bat`. Ele não chama `javac`,
-não enumera fontes e não usa `build.sh`, `build.bat` ou scripts manuais como
-entrada alternativa.
+Ubuntu executa o pacote sob Xvfb/Mesa. Windows provisiona Mesa llvmpipe conforme
+o contrato abaixo. O workflow chama exclusivamente `gradlew`/`gradlew.bat`.
 
-Os testes JUnit e gates de integração do build permanecem em `clean test`. O
-smoke de compatibilidade de runtime fica no task separado
-`java25CompatibilityTest`, com timeout próprio. O gate gráfico da Issue #14 é
-`smokeSpikeDistribution`: ele executa o pacote real, gera o manifesto de
-evidências e não usa o classpath de desenvolvimento do Gradle. O
-`legacyDemoSmoke` continua disponível apenas para o backend Java2D transitório.
+## Mesa llvmpipe no runner Windows
 
-## Relatórios
+[`provision-mesa-windows.ps1`](../.github/scripts/provision-mesa-windows.ps1)
+é tooling de CI, não parte do produto.
 
-O artifact `test-reports-<SO>` é enviado mesmo quando o job falha e fica retido
-por 14 dias. Quando a suíte chega à publicação, ele contém:
+| Item | Valor fixado |
+|---|---|
+| Distribuição | `pal1000/mesa-dist-win` 26.1.1 |
+| Tag/commit | `1e2b696ce9e81e77e17ee6e4787587237ce9d2ed` |
+| URL | `https://github.com/pal1000/mesa-dist-win/releases/download/26.1.1/mesa3d-26.1.1-release-msvc.7z` |
+| SHA-256 do arquivo | `d5e90e9ae4d620313b61fbbf8e9a55761454e38b6501c39be6d93449c88780e1` |
+| Entrada extraída | `x64/opengl32.dll` |
+| SHA-256 de `opengl32.dll` | `d2645f47b4dee4f47dcdfc1b2021a70f471655d95a019cfd1fb48415810867ed` |
+| Entrada extraída | `x64/libgallium_wgl.dll` |
+| SHA-256 de `libgallium_wgl.dll` | `27f16f9e98119ad529ed915d4f65c3a2e8d84b4f8cbdce2f13cda0637b73e05c` |
+| Licença | core MIT; cada arquivo conserva seu SPDX aplicável |
 
-- `**/build/test-results/test/**` e `**/build/reports/tests/test/**` para Java
-  21;
-- `**/build/test-results/java25CompatibilityTest/**` e
-  `**/build/reports/tests/java25CompatibilityTest/**` para Java 25;
-- `build/reports/tests/aggregate/**` para a visão agregada da baseline;
-- `build/reports/licenses/**` para dependências e ferramentas resolvidas;
-- `build/reports/jars/**` para a inspeção dos artifacts;
-- `**/build/reports/api/**` para assinatura atual e fronteiras públicas.
+O script:
+
+- exige archive, extração e JDKs dentro de `RUNNER_TOOL_CACHE`;
+- recusa sobrescrita;
+- verifica o arquivo antes de extrair;
+- extrai somente as duas entradas allowlisted e verifica ambos os hashes;
+- consulta `KnownDLLs` antes da cópia;
+- copia os DLLs apenas para `%JAVA_HOME%\bin` e
+  `%JAVA_HOME_25_X64%\bin`;
+- publica versão, origem, commit, licença e digests para
+  `runner.properties`.
+
+Uma etapa negativa chama o mesmo verificador com um SHA-256 deliberadamente
+incorreto. O job só continua quando essa chamada falha e grava
+`mesa.checksum.negative=PASS`.
+
+Os smokes Windows executam com `GALLIUM_DRIVER=llvmpipe` e
+`LIBGL_ALWAYS_SOFTWARE=1`. `probe.log` deve registrar `gl.renderer` contendo
+`llvmpipe`; ausência ou renderer diferente falha o check.
+
+O arquivo baixado, a extração, os JDKs modificados e os DLLs Mesa nunca entram
+no ZIP, classpath distribuído ou artifacts. `verifyDistribution` inspeciona
+nomes e conteúdo dos JARs para impedir regressão.
+
+## Distribuição e evidências
+
+O ZIP inclui somente natives contratados de Windows/Linux. O artifact upstream
+`gdx-platform-1.14.2-natives-desktop.jar` é verificado pelo SHA-256
+`f4847981d27c6524a30f5665036ec8c11f48c8eda7610bb63f742de95ffe1970`
+e convertido de forma reproduzível em
+`gdx-platform-1.14.2-natives-windows-linux.jar`. O build exige a entrada
+allowlisted, licença Apache-2.0 e proveniência em `third_party/`.
+
+O artifact `test-reports-<SO>` contém XML/HTML JUnit, visão agregada, licenças,
+inspeção de JARs e baseline de API.
 
 O artifact `spike-distribution-and-evidence-<SO>` contém:
 
-- `desktop/build/distributions/**`, com o ZIP canônico;
-- `desktop/build/reports/spike/**`, com evidências Java 21/25 e manifestos
-  SHA-256;
-- `build/reports/distribution/**`, com a inspeção estrutural do pacote.
+- `desktop/build/distributions/*.zip`;
+- `desktop/build/reports/spike/**`, incluindo Java 21/25 e manifestos;
+- `build/reports/distribution/**`, incluindo inventário, hash pré/pós-smoke e
+  prova negativa de checksum no Windows.
 
-`if-no-files-found: error` faz a ausência de qualquer conjunto obrigatório de
-evidências falhar explicitamente, inclusive quando uma etapa anterior termina
-antes de produzi-lo.
+`if-no-files-found: error` transforma ausência de evidência em falha explícita.
 
-## Cache seguro e evidência de hit/miss
+## Cache
 
-O cache Gradle usa o provider `basic`, valida o Wrapper e separa chaves por
-sistema e conteúdo do build. Pull requests e merge queues têm acesso
-somente-leitura; apenas pushes em `main` podem gravar. Essa política impede que
-código não integrado substitua o cache compartilhado da branch protegida.
-
-No check Ubuntu, `clean test` é repetido após a execução inicial. A primeira
-execução popula o build cache local e a repetição registra tasks `FROM-CACHE`,
-fornecendo uma prova reproduzível de miss/hit no mesmo ambiente. O resumo do
-`setup-gradle` registra separadamente se o cache remoto foi restaurado ou não.
+O cache Gradle usa provider `basic`, Wrapper validado e chaves por sistema e
+conteúdo. Pull requests e merge queue são somente leitura; apenas pushes em
+`main` podem gravar. Ubuntu repete `clean test` para registrar prova local de
+miss/hit.
 
 ## Proteção de `main`
 
-O mantenedor deve configurar a regra/ruleset de `main` com:
+O ruleset de `main` deve exigir:
 
-- pull request obrigatório antes do merge;
-- os três checks acima como required status checks, usando GitHub Actions como
-  origem esperada;
-- branch atualizada antes do merge, se essa política estiver habilitada no
-  repositório;
-- nenhuma permissão de bypass para automações comuns.
+- pull request antes do merge;
+- `Build and test (Ubuntu)`;
+- `Build and test (Windows)`;
+- branch atualizada antes do merge, quando essa política estiver habilitada;
+- nenhum bypass para automações comuns.
 
-Os nomes são únicos e o workflow não usa filtro de paths. Depois de configurada,
-qualquer falha em Ubuntu, Windows ou macOS mantém o respectivo required check
-vermelho e impede o merge. `merge_group` garante que os mesmos checks sejam
-produzidos para uma merge queue.
-
-## Injeção controlada de falha
-
-Para validar o bloqueio sem alterar produção:
-
-1. em uma branch de teste, adicione temporariamente a um único item da matriz
-   uma invocação do Wrapper para um task Gradle inexistente;
-2. envie o commit e preserve o link da execução: o sistema escolhido deve
-   falhar, os outros dois devem terminar porque `fail-fast` é `false`;
-3. reverta integralmente o commit de injeção;
-4. confirme os três checks verdes no commit final e registre ambos os links em
-   `docs/validation/issue-12.md`.
-
-Não faça merge do commit de injeção. Uma falha real recebe o mesmo tratamento:
-diagnosticar pelo log e artifact do sistema afetado, corrigir na branch e exigir
-uma nova execução verde dos três checks.
+Os dois nomes são estáveis e o workflow não usa filtro de paths. Se um check
+legado da matriz histórica ainda estiver configurado, ele deve ser removido do
+ruleset na mesma entrega da Issue #60.
 
 ## Rollback
 
-Reverter `build.yml`, este documento, `java25CompatibilityTest` e os aliases do
-spike remove a CI e os smokes adicionais sem alterar o backend Java2D legado.
-Em uma emergência de infraestrutura, não remova silenciosamente um required
-check: registre a indisponibilidade, obtenha aprovação do
-`technical_coordinator` e ajuste a proteção e este contrato na mesma mudança.
+Reverter a PR da Issue #60 restaura workflow, distribuição e documentação
+anteriores sem alterar Java2D. Uma indisponibilidade do Mesa fixado não autoriza
+remover silenciosamente o smoke ou aceitar outro renderer: registre o bloqueio,
+revise origem/hashes por nova mudança aprovada e mantenha o check vermelho.

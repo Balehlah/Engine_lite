@@ -25,7 +25,7 @@ vinculadas à Issue #14.
 
 | Área | Critério de aprovação | Evidência obrigatória |
 |---|---|---|
-| Build | `clean test` e distribuição terminam com exit code 0 em Windows, Linux e macOS | Logs e artifacts da CI por SO |
+| Build | `clean test` e distribuição terminam com exit code 0 em Windows e Linux | Logs e artifacts da CI por SO suportado |
 | Lifecycle | Janela abre, redimensiona e fecha sem exceção não tratada | Smoke autoencerrável e logs |
 | Viewport | 320×180 produz 2× em 640×360, 2× em 800×600 com barras 80/120 e 4× em 1280×720 | Testes e screenshots dos três tamanhos |
 | Filtragem | Apresentação usa nearest-neighbor; nenhuma escala fracionária é aceita | Teste de configuração e golden |
@@ -33,7 +33,7 @@ vinculadas à Issue #14.
 | Assets | Asset carrega com o processo iniciado fora da raiz do repositório | Execução com CWD alternativo |
 | Integrações | Probes de áudio e Tiled terminam com sucesso ou documentam rejeição impeditiva | Logs dos probes |
 | Recursos | Cada `Disposable` criado pelo spike é liberado exatamente uma vez | Contadores e log de dispose |
-| Packaging | O pacote gerado inicia e encerra nos três SOs | Artifacts e smoke por SO |
+| Packaging | O pacote gerado inicia e encerra em Windows e Linux | Artifacts e smoke por SO suportado |
 | Qualidade | Zero defeitos bloqueadores abertos no domínio do spike | Checklist do `qa_validator` |
 
 ## Regra de decisão
@@ -66,6 +66,8 @@ natives ou APIs do candidato contaminem o core antes de validação.
 - A ADR-002 não declara libGDX/LWJGL3 aceito nesta data.
 - Issues dependentes do backend devem aguardar a conclusão da #14.
 - A decisão final preservará esta matriz e apontará para os artifacts usados.
+- A [ADR-006](ADR-006-windows-linux-desktop-support.md) substitui a plataforma
+  da D-002 e restringe esta matriz às famílias atualmente suportadas.
 
 ## Gatilhos de revisão
 
