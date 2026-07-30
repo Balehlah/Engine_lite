@@ -2,7 +2,7 @@
 
 - Estado: concluído; backend aceito pela ADR-002/D-011
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
-- Dependência bloqueante:
+- Dependência concluída:
   [#60](https://github.com/Balehlah/Engine_lite/issues/60)
 - Branch-base: `codex/issue-14-libgdx-lwjgl3-spike`
 - Branch empilhada: `codex/issue-60-windows-linux-mesa`

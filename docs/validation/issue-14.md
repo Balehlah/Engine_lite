@@ -5,7 +5,7 @@
 - Base consumida: `9de87d9`
 - Issue: [#14](https://github.com/Balehlah/Engine_lite/issues/14)
 - Estado: gates, integração, revisão independente e decisão ADR-002 concluídos;
-  fechamento formal da Issue #60 pendente
+  Issue #60 fechada e PR #59 pronta para revisão
 
 ## Gate de entrada
 

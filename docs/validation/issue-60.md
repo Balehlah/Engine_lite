@@ -6,8 +6,7 @@
 - Base remota:
   [PR #59](https://github.com/Balehlah/Engine_lite/pull/59)
 - Issue: [#60](https://github.com/Balehlah/Engine_lite/issues/60)
-- Estado: todos os critérios concluídos; aguardando apenas a CI do registro e
-  o fechamento formal
+- Estado: concluída e fechada em 2026-07-30
 
 ## Baseline anterior à mudança
 
@@ -183,6 +182,13 @@ conversas e exatamente os contexts `Build and test (Ubuntu)` e
   [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30559042291/job/90926973734).
 - @Balehlah aprovou aceitar libGDX/LWJGL3 conforme ADR-002, preservando Java2D
   como fallback legado; D-011 registra o resultado sem reescrever D-008.
+- O commit de decisão `77fca20` passou na matriz final da PR #59:
+  [run 30559902297](https://github.com/Balehlah/Engine_lite/actions/runs/30559902297),
+  [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30559902297/job/90929915617)
+  e
+  [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30559902297/job/90929915469).
+- A Issue #60 foi fechada como concluída após todos os 12 critérios serem
+  marcados.
 
 ## Checklist de fechamento
 
