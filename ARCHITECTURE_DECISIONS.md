@@ -29,16 +29,23 @@ vinculados.
 | D-007 | Resolução virtual provisória 320×180, configurável, nearest e escala inteira | @Balehlah (`technical-coordinator`) | 2026-07-24 | É uma referência 16:9 pequena, mensurável e já usada nos contratos do backlog | Barras centralizadas e degraded mode tornam-se requisitos | Evidência do spike ou testes de viewport invalidarem a escolha | [ADR-005](docs/adr/ADR-005-virtual-viewport.md) | [#9](https://github.com/Balehlah/Engine_lite/issues/9) | Fixtures e conversões da #22 |
 | D-008 | libGDX/LWJGL3 permanece experimental até passar integralmente o gate | @Balehlah (`technical-coordinator`) | 2026-07-24 | O protótipo Java2D não prova packaging, GPU, natives ou lifecycle multiplataforma | Migração horizontal fica proibida antes da decisão final | Conclusão ou inviabilidade do spike da #14 | [ADR-002](docs/adr/ADR-002-libgdx-lwjgl3-backend.md) | [#9](https://github.com/Balehlah/Engine_lite/issues/9) | Matriz obrigatória da ADR-002; aprovador @Balehlah |
 | D-009 | Decisões são históricas e só mudam por nova ADR | @Balehlah (`technical-coordinator`) | 2026-07-24 | Evita mudanças silenciosas nos contratos consumidos pelo backlog | Reversões preservam motivo, evidência e impacto | Nova evidência que torne uma decisão inadequada | [ADR-001](docs/adr/ADR-001-product-platform-runtime.md) | [#9](https://github.com/Balehlah/Engine_lite/issues/9) | Revisão do `technical-coordinator` e do `qa_validator` |
+| D-010 | Windows e Linux são as únicas famílias desktop suportadas na 1.0.0; macOS não é suportado | @Balehlah (`technical-coordinator`) | 2026-07-29 | Não há ambiente disponível para validar a terceira família original; o runner Windows pode usar Mesa auditável e efêmero | D-002 é substituída sem reescrita; CI, pacote e gate passam a cobrir somente Windows/Linux | Nova família com ambiente de validação completo, perda de suporte do backend ou inviabilidade do tooling Mesa | [ADR-006](docs/adr/ADR-006-windows-linux-desktop-support.md) | [#60](https://github.com/Balehlah/Engine_lite/issues/60) | Dois checks verdes, quatro smokes, revisão `qa_validator` e aprovação do mantenedor |
+| D-011 | libGDX/LWJGL3 é o backend desktop aceito para a linha 1.0.0; Java2D permanece fallback legado | @Balehlah (`technical-coordinator`) | 2026-07-30 | A matriz Windows/Linux passou integralmente em Java 21/25, com quatro smokes do ZIP e zero defeitos bloqueadores no QA independente | A escolha do backend está decidida; migração horizontal e remoção do legado continuam fora do spike | Regressão bloqueante no gate, incompatibilidade de licença/suporte ou nova necessidade arquitetural | [ADR-002](docs/adr/ADR-002-libgdx-lwjgl3-backend.md) | [#14](https://github.com/Balehlah/Engine_lite/issues/14) | PR #61 integrada; PR #59 verde; `qa_validator` e @Balehlah aprovam |
+
+D-002 permanece acima como registro histórico imutável e é substituída por
+D-010 para o contrato vigente. D-008 permanece como registro histórico do gate
+experimental e é concluída por D-011, sem reescrita. D-009 continua aplicável.
 
 ## Estado dos ADRs
 
 | ADR | Estado | Decisão |
 |---|---|---|
 | [ADR-001](docs/adr/ADR-001-product-platform-runtime.md) | Aceita | Produto, plataformas, Java e governança |
-| [ADR-002](docs/adr/ADR-002-libgdx-lwjgl3-backend.md) | Aceita como experimento; backend pendente | Gate de libGDX/LWJGL3, aprovador e fallback |
+| [ADR-002](docs/adr/ADR-002-libgdx-lwjgl3-backend.md) | Aceita | libGDX/LWJGL3 aprovado; Java2D preservado como fallback legado |
 | [ADR-003](docs/adr/ADR-003-versioning-and-public-api.md) | Aceita | SemVer, futura 1.0.0 e pacotes |
 | [ADR-004](docs/adr/ADR-004-license-and-assets.md) | Aceita | Apache-2.0 e política de assets |
 | [ADR-005](docs/adr/ADR-005-virtual-viewport.md) | Aceita provisoriamente | Viewport virtual 320×180 |
+| [ADR-006](docs/adr/ADR-006-windows-linux-desktop-support.md) | Aceita | Substitui D-002: suporte desktop somente a Windows/Linux |
 
 ## Relação com o planejamento
 

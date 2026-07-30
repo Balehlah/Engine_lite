@@ -21,20 +21,42 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Versão central `1.0.0-SNAPSHOT` e `engine.api.EngineVersion`.
 - Baseline de assinatura para `engine.api.*`, gate de vazamentos internos,
   relatório de licenças e inspeção automatizada dos JARs.
+- Spike desktop removível com libGDX 1.14.2 e LWJGL 3.4.1, framebuffer virtual
+  320×180, escala inteira, nearest-neighbor e barras centralizadas.
+- Distribuição ZIP reproduzível, launcher multiplataforma e smoke
+  autoencerrável com evidências de lifecycle, input, assets, áudio, Tiled,
+  viewport e descarte.
+- ADR-006/D-010, que torna Windows e Linux as únicas famílias desktop
+  suportadas pela linha 1.0.0.
+- ADR-002/D-011, que aceita libGDX/LWJGL3 como backend desktop e preserva
+  Java2D como fallback legado.
+- Provisionamento efêmero e auditável de Mesa llvmpipe 26.1.1 para o smoke
+  Windows hospedado.
 
 ### Alterado
 
-- Todos os artifacts recebem versão e notices consistentes em `META-INF`.
+- Todos os JARs próprios do Engine Lite recebem versão e notices consistentes
+  em `META-INF`.
 - `clean test` também valida distribuição, API, dependências e assets.
+- A CI desktop passa a construir e executar o mesmo ZIP do spike em Java 21 e
+  25 nos runners Windows e Linux.
+- JLayer, JOrbis e os componentes nativos de LWJGL são inventariados com
+  licenças e proveniência no pacote.
+- A distribuição remove classifiers e arquivos nativos da plataforma não
+  suportada; o JAR `gdx-platform` é curado por allowlist reproduzível.
 
 ### Documentação
 
 - Registradas as decisões de produto, plataformas, Java, licença, API,
   viewport e backend da Issue #9.
 - Adicionados ADRs, auditoria de fundação, roadmap e política de versionamento.
-- Definido gate mensurável e fallback para o spike libGDX/LWJGL3.
+- Concluído o gate mensurável do spike libGDX/LWJGL3 com decisão aceita,
+  fallback preservado e QA independente sem bloqueadores.
 - Documentado o contrato estável, o uso de `api`/`implementation`, a atualização
   aprovada da baseline e o processo de atribuição.
+- Adicionados especificação reproduzível e registro de evidências da Issue #14.
+- Documentada a substituição histórica de D-002 por D-010 e a validação da
+  Issue #60.
 
 ---
 

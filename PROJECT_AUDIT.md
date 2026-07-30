@@ -1,5 +1,9 @@
 # Auditoria de fundação do Engine Lite
 
+> Registro histórico da `main` antes da Issue #9. A decisão de plataformas
+> documentada neste snapshot foi substituída por D-010/ADR-006; os fatos e a
+> decisão original permanecem inalterados.
+
 - Data da auditoria: 2026-07-24
 - Responsável: [@Balehlah](https://github.com/Balehlah), no papel de
   `technical-coordinator`

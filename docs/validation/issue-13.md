@@ -1,5 +1,9 @@
 # Evidências de validação — Issue #13
 
+> Registro histórico fechado. Referências à matriz original descrevem a
+> execução daquele gate e foram substituídas para o contrato atual por
+> D-010/ADR-006.
+
 - Data: 2026-07-28
 - Branch: `codex/issue-13-license-semver-api-baseline`
 - Base consumida: `43b7571` (`main` após as Issues #9, #10, #11 e #12)

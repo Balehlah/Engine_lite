@@ -5,14 +5,16 @@ be committed or distributed. Accepted-by-default licenses are original work,
 CC0 and CC BY 4.0; any other license requires compatibility review under
 ADR-004.
 
-There are currently no distributable assets in this repository.
+The spike assets are original, deliberately tiny textual fixtures. They are
+stored as source text so their origin and the renderer/Tiled expectations are
+reviewable without binary provenance.
 
 ## Inventory
 
-When an asset is added, replace the empty-state row with one row per file. Paths
-must be relative to the repository root and enclosed in backticks so
+Paths must be relative to the repository root and enclosed in backticks so
 `verifyAssetAttribution` can validate the inventory.
 
 | Repository path | Author/owner | Origin | License | Required attribution |
 |---|---|---|---|---|
-| _No assets_ | — | — | — | — |
+| `assets/spike/sprite.rgba` | Engine Lite contributors | Original textual RGBA pixel fixture created for Issue #14 | Apache-2.0 | Preserve the project `LICENSE` and this inventory |
+| `assets/spike/probe.tmx` | Engine Lite contributors | Original textual Tiled fixture created for Issue #14 | Apache-2.0 | Preserve the project `LICENSE` and this inventory |

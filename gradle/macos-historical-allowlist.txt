@@ -1,0 +1,8 @@
+# Relative path | line marker (* means the complete file) | historical reason
+ARCHITECTURE_DECISIONS.md|D-002|Immutable original decision row, explicitly superseded by D-010
+PROJECT_AUDIT.md|*|Pre-Issue-9 repository audit, explicitly marked as historical
+docs/adr/ADR-001-product-platform-runtime.md|*|Accepted original ADR preserved without retroactive edits
+docs/validation/issue-9.md|*|Closed evidence for the original architecture decision
+docs/validation/issue-10.md|*|Closed build-boundary evidence under the original matrix
+docs/validation/issue-12.md|*|Closed CI evidence for the original matrix
+docs/validation/issue-13.md|*|Closed license and API evidence under the original matrix

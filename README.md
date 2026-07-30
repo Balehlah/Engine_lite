@@ -4,9 +4,12 @@ Engine 2D profissional em Java puro para jogos pixel art. Arquitetura modular, l
 
 ## Estado do projeto
 
-O código atual é um protótipo pré-1.0 baseado em Java2D. O produto é o motor;
-`game.test` é apenas uma demo consumidora. A futura versão 1.0.0 será a primeira
-release pública com contrato SemVer e API estável auditada.
+O código atual é um protótipo pré-1.0. libGDX/LWJGL3 foi aceito pela ADR-002
+como backend desktop da futura 1.0.0, enquanto a demo consumidora ainda usa
+Java2D como fallback legado. A decisão do backend não antecipa a migração
+horizontal. O produto é o motor; `game.test` é apenas uma demo consumidora. A
+futura versão 1.0.0 será a primeira release pública com contrato SemVer e API
+estável auditada.
 
 A versão de desenvolvimento é `1.0.0-SNAPSHOT`. Somente `engine.api.*` é
 protegido pela baseline; todos os demais pacotes públicos atuais continuam
@@ -120,7 +123,7 @@ gradlew.bat projects
 gradlew.bat verifyDistribution
 ```
 
-No Linux/macOS:
+No Linux:
 
 ```bash
 ./gradlew clean test
@@ -144,15 +147,43 @@ gradlew.bat legacyDemo
 ./gradlew legacyDemo
 ```
 
-O smoke autoencerrável usado na validação é `legacyDemoSmoke`. Os aliases
-`run.bat` e `run.sh` continuam disponíveis até a remoção formal do boundary
-legado.
+O smoke autoencerrável da demo Java2D é `legacyDemoSmoke`; ele não valida o
+spike. Os aliases `run.bat` e `run.sh` continuam disponíveis até a remoção
+formal do boundary legado.
+
+### Spike empacotado libGDX/LWJGL3
+
+O spike removível da Issue #14 concluiu o gate e aprovou libGDX/LWJGL3 como
+backend desktop. Ele constrói um ZIP canônico, extrai esse ZIP em diretório
+temporário, inicia o launcher a partir de um CWD externo e autoencerra depois
+de validar lifecycle, viewport, input, assets, áudio, Tiled e descarte de
+recursos:
+
+```batch
+gradlew.bat buildSpikeDistribution verifyDistribution
+gradlew.bat smokeSpikeDistribution -PspikeSmokeVariant=local-java21
+```
+
+```bash
+./gradlew buildSpikeDistribution verifyDistribution
+./gradlew smokeSpikeDistribution -PspikeSmokeVariant=local-java21
+```
+
+O ZIP fica em `desktop/build/distributions/`. Logs, screenshots e o manifesto
+SHA-256 ficam em `desktop/build/reports/spike/`. A CI repete o smoke do mesmo
+pacote em Java 21 e 25 nos runners Windows e Linux. O runner Windows usa Mesa
+llvmpipe fixado e verificado somente durante o job; esses DLLs não entram no
+ZIP. Consulte a
+[especificação do spike](docs/spikes/libgdx-lwjgl3.md) e o
+[registro de validação](docs/validation/issue-14.md).
 
 ### Módulos Gradle
 
 - `engine:core`: classes já independentes de AWT, libGDX e LWJGL;
-- `engine:gdx`: boundary vazio reservado ao spike da Issue #14;
-- `desktop`: backend Java2D atual no source set transitório `legacy`;
+- `engine:gdx`: implementação incubadora e assets internos do spike da Issue
+  #14, sem exposição pela API estável;
+- `desktop`: launcher LWJGL3 do spike e backend Java2D no source set transitório
+  `legacy`;
 - `game`: demo consumidora e seu ponto de entrada;
 - raiz: somente agregação; não produz JAR monolítico.
 
@@ -209,12 +240,12 @@ public class MeuJogo extends Game {
 1. **Baixo Acoplamento** - Módulos independentes
 2. **Alta Coesão** - Cada classe tem uma responsabilidade
 3. **API Clara** - Engine nunca depende do jogo
-4. **Core independente de backend** - Java2D permanece legado até o spike de libGDX/LWJGL3
+4. **Core independente de backend** - Java2D permanece legado até a decisão final da ADR-002
 5. **Pixel-Perfect** - Otimizado para pixel art
 
 ### Contratos de fundação
 
-- Desktop suportado: Windows, Linux e macOS.
+- Desktop suportado: Windows e Linux.
 - Runtime baseline: Java 21 LTS; compatibilidade adicional em Java 25 LTS.
 - Viewport virtual provisório: 320×180, nearest-neighbor e escala inteira.
 - API estável futura: `engine.api.*`.
@@ -270,8 +301,9 @@ ColorPalette.CGA
 
 - Java 21 LTS
 - Java 25 LTS é uma linha adicional de compatibilidade, não a baseline
-- Windows, Linux ou macOS
-- Nenhuma dependência externa
+- Windows ou Linux
+- libGDX 1.14.2 e LWJGL 3.4.1 são resolvidos pelo Gradle Wrapper somente para
+  o backend empacotado
 
 ## 📈 Evolução Futura
 

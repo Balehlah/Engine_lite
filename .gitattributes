@@ -8,6 +8,10 @@
 *.log text eol=lf
 *.md text eol=lf
 *.properties text eol=lf
+*.provenance text eol=lf
+*.rgba text eol=lf
 *.sh text eol=lf
 *.txt text eol=lf
+*.tmx text eol=lf
+LICENSE text eol=lf
 gradlew text eol=lf

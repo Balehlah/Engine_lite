@@ -1,4 +1,10 @@
 # Coordinates | SPDX license | license URL | source URL | usage
+com.badlogicgames.gdx:gdx|Apache-2.0|https://www.apache.org/licenses/LICENSE-2.0|https://github.com/libgdx/libgdx|runtime
+com.badlogicgames.gdx:gdx-backend-lwjgl3|Apache-2.0|https://www.apache.org/licenses/LICENSE-2.0|https://github.com/libgdx/libgdx|runtime
+com.badlogicgames.gdx:gdx-jnigen-loader|Apache-2.0|https://www.apache.org/licenses/LICENSE-2.0|https://github.com/libgdx/gdx-jnigen|runtime
+com.badlogicgames.gdx:gdx-platform|Apache-2.0|https://www.apache.org/licenses/LICENSE-2.0|https://github.com/libgdx/libgdx|runtime
+com.badlogicgames.jlayer:jlayer|LGPL-2.1-only|https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html|https://github.com/libgdx/jlayer-gdx|runtime
+org.jcraft:jorbis|LGPL-2.0-or-later|https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html|https://www.jcraft.com/jorbis/|runtime
 org.junit:junit-bom|EPL-2.0|https://www.eclipse.org/legal/epl-2.0/|https://github.com/junit-team/junit5|test
 org.junit.jupiter:junit-jupiter|EPL-2.0|https://www.eclipse.org/legal/epl-2.0/|https://github.com/junit-team/junit5|test
 org.junit.jupiter:junit-jupiter-api|EPL-2.0|https://www.eclipse.org/legal/epl-2.0/|https://github.com/junit-team/junit5|test
@@ -7,4 +13,10 @@ org.junit.jupiter:junit-jupiter-params|EPL-2.0|https://www.eclipse.org/legal/epl
 org.junit.platform:junit-platform-commons|EPL-2.0|https://www.eclipse.org/legal/epl-2.0/|https://github.com/junit-team/junit5|test
 org.junit.platform:junit-platform-engine|EPL-2.0|https://www.eclipse.org/legal/epl-2.0/|https://github.com/junit-team/junit5|test
 org.junit.platform:junit-platform-launcher|EPL-2.0|https://www.eclipse.org/legal/epl-2.0/|https://github.com/junit-team/junit5|test
+org.lwjgl:lwjgl|BSD-3-Clause|https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md|https://github.com/LWJGL/lwjgl3|runtime
+org.lwjgl:lwjgl-glfw|BSD-3-Clause|https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md|https://github.com/LWJGL/lwjgl3|runtime
+org.lwjgl:lwjgl-jemalloc|BSD-3-Clause|https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md|https://github.com/LWJGL/lwjgl3|runtime
+org.lwjgl:lwjgl-openal|BSD-3-Clause|https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md|https://github.com/LWJGL/lwjgl3|runtime
+org.lwjgl:lwjgl-opengl|BSD-3-Clause|https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md|https://github.com/LWJGL/lwjgl3|runtime
+org.lwjgl:lwjgl-stb|BSD-3-Clause|https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md|https://github.com/LWJGL/lwjgl3|runtime
 org.opentest4j:opentest4j|EPL-2.0|https://www.eclipse.org/legal/epl-2.0/|https://github.com/ota4j-team/opentest4j|test
