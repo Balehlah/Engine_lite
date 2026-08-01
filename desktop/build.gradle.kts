@@ -718,6 +718,7 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
             "lifecycle.log",
             "probe.log",
             "viewport.log",
+            "timing.log",
             "dispose.log",
             "openal.log",
             "process.stderr.log",
@@ -778,6 +779,60 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
         check(requiredProbeResults.all { it in probeLog }) {
             "Probe log is missing PASS evidence: " +
                 requiredProbeResults.filterNot { it in probeLog }
+        }
+        val timingLog = evidenceByName.getValue("timing.log").readText(Charsets.UTF_8)
+        val timingLines = timingLog.lineSequence().filter(String::isNotBlank).toList()
+        check(timingLines.size == 2) {
+            "Timing log must contain exactly one policy and one metrics line; " +
+                "found ${timingLines.size}."
+        }
+        val timingPolicy = timingLines[0].substringAfter(' ', missingDelimiterValue = "")
+        val timingMetrics = timingLines[1].substringAfter(' ', missingDelimiterValue = "")
+        check(timingPolicy.isNotEmpty() && timingMetrics.isNotEmpty()) {
+            "Timing log lines must contain an ISO-8601 timestamp and a payload."
+        }
+        val requiredTimingPolicy = setOf(
+            "fixed.updates-per-second=60.0",
+            "fixed.dt-seconds=0.016666666666666666",
+            "fixed.step-nanos=16666667",
+            "clamp-nanos=250000000",
+            "max-catch-up=5",
+        )
+        check(requiredTimingPolicy.all { it in timingPolicy }) {
+            "Timing log is missing fixed-timestep policy evidence: " +
+                requiredTimingPolicy.filterNot { it in timingPolicy }
+        }
+        fun timingMetric(name: String): String {
+            val match = Regex("(?:^|;)$name=([^;\\r\\n]+)")
+                .find(timingMetrics)
+                ?: error("Timing log is missing metric '$name'.")
+            return match.groupValues[1]
+        }
+        val timingFrames = timingMetric("frames").toLong()
+        val timingUpdates = timingMetric("updates").toLong()
+        val timingAlpha = timingMetric("alpha").toDouble()
+        val timingClampedFrames = timingMetric("clamped-frames").toLong()
+        val timingClampedNanos = timingMetric("clamped-wall-nanos").toLong()
+        val timingCatchUpHits = timingMetric("catch-up-limit-hits").toLong()
+        val timingCatchUpDiscarded = timingMetric("catch-up-discarded-nanos").toLong()
+        val timingInactiveNanos = timingMetric("inactive-wall-nanos").toLong()
+        check(
+            timingFrames > 0L
+                && timingUpdates > 0L
+                && timingAlpha >= 0.0
+                && timingAlpha < 1.0
+                && timingClampedFrames >= 0L
+                && timingClampedNanos >= 0L
+                && timingCatchUpHits >= 0L
+                && timingCatchUpDiscarded >= 0L
+                && timingInactiveNanos >= 0L,
+        ) {
+            "Timing metrics are outside their required boundaries: " +
+                "frames=$timingFrames, updates=$timingUpdates, alpha=$timingAlpha, " +
+                "clampedFrames=$timingClampedFrames, clampedNanos=$timingClampedNanos, " +
+                "catchUpHits=$timingCatchUpHits, " +
+                "catchUpDiscarded=$timingCatchUpDiscarded, " +
+                "inactiveNanos=$timingInactiveNanos"
         }
         val runner = Properties()
         evidenceByName.getValue("runner.properties")
