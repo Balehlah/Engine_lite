@@ -719,6 +719,7 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
             "probe.log",
             "viewport.log",
             "timing.log",
+            "input.log",
             "dispose.log",
             "openal.log",
             "process.stderr.log",
@@ -746,6 +747,24 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
         check(summary.getProperty("result") == "PASS") {
             "Smoke summary did not report PASS: ${summary.getProperty("result")}"
         }
+        check(summary.getProperty("input.queue.capacity") == "4096") {
+            "Smoke did not use the reviewed bounded input capacity."
+        }
+        check(summary.getProperty("input.queue.overflows") == "0") {
+            "Smoke input queue overflowed."
+        }
+        check(summary.getProperty("input.queue.pending") == "0") {
+            "Smoke ended with unconsumed input events."
+        }
+        val recordedAcceptedInputEvents = evidenceByName.getValue("input.log")
+            .readLines(Charsets.UTF_8)
+            .last()
+            .substringAfter("accepted-events=")
+            .substringBefore(';')
+            .toLong()
+        check(summary.getProperty("input.events").toLong() == recordedAcceptedInputEvents) {
+            "Smoke summary input.events differs from accepted queue events."
+        }
         check(summary.getProperty("fixtures") == "3") {
             "Smoke summary did not complete all three fixtures."
         }
@@ -757,6 +776,11 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
             "result",
             "fixtures",
             "input.events",
+            "input.ticks",
+            "input.queue.capacity",
+            "input.queue.coalesced-movements",
+            "input.queue.overflows",
+            "input.queue.pending",
             "disposables",
         )
         val disposableEntries = summary.stringPropertyNames() - summaryMetadata
@@ -774,11 +798,25 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
             "tiled=PASS",
             "audio=PASS",
             "input.processor=PASS",
+            "input.mapping-bars=PASS",
             "input.backend-event=PASS",
         )
         check(requiredProbeResults.all { it in probeLog }) {
             "Probe log is missing PASS evidence: " +
                 requiredProbeResults.filterNot { it in probeLog }
+        }
+        val inputLog = evidenceByName.getValue("input.log").readText(Charsets.UTF_8)
+        check("overflow=fail-fast" in inputLog) {
+            "Input log does not record the overflow policy."
+        }
+        check("coalescence=adjacent-pointer-movement-only" in inputLog) {
+            "Input log does not record the movement-only coalescence policy."
+        }
+        check("pointer.region=" in inputLog) {
+            "Input log does not contain a tick-mapped pointer snapshot."
+        }
+        check("pointer.region=BARS" in inputLog && "pointer.region=VIEWPORT" in inputLog) {
+            "Input log must prove both empty-bar and virtual-viewport mapping."
         }
         val timingLog = evidenceByName.getValue("timing.log").readText(Charsets.UTF_8)
         val timingLines = timingLog.lineSequence().filter(String::isNotBlank).toList()

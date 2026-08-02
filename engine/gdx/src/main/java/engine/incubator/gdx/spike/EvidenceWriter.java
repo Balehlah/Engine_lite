@@ -15,6 +15,7 @@ final class EvidenceWriter {
         "dispose.log",
         "viewport.log",
         "timing.log",
+        "input.log",
         "summary.properties",
         "failure.log",
         "probe-tone.wav",

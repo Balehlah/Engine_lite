@@ -3,7 +3,6 @@ package engine.incubator.gdx.spike;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
@@ -17,6 +16,11 @@ import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.Matrix4;
+import engine.incubator.gdx.input.GdxInputAdapter;
+import engine.incubator.runtime.input.InputEventQueue;
+import engine.incubator.runtime.input.InputSnapshot;
+import engine.incubator.runtime.input.ScreenToVirtual;
+import engine.incubator.runtime.input.TickInput;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
@@ -37,6 +41,11 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     private static final int SPRITE_HEIGHT = 16;
     private static final int SPRITE_BASE_X = 144;
     private static final int SPRITE_Y = 82;
+    private static final int BAR_PROBE_X = 17;
+    private static final int BAR_PROBE_Y = 29;
+    private static final int VIEWPORT_PROBE_X = 100;
+    private static final int VIEWPORT_PROBE_Y = 200;
+    private static final int CURSOR_PROBE_TOLERANCE = 8;
 
     private static final int BLACK_RGBA = 0x000000ff;
     private static final int BACKGROUND_RGBA = 0x101828ff;
@@ -58,7 +67,7 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     private Texture spriteTexture;
     private FrameBuffer virtualFrameBuffer;
     private TextureRegion virtualFrameBufferRegion;
-    private SpikeInputProcessor inputProcessor;
+    private GdxInputAdapter inputProcessor;
     private FixedTimestepLoop fixedTimestepLoop;
     private FixedTimestepDebugOverlay fixedTimestepDebugOverlay;
     private double simulationTimeSeconds;
@@ -67,12 +76,13 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     private int fixtureFrames;
     private int stableFrames;
     private int inputWaitFrames;
-    private int inputEventSequence;
-    private int inputSequenceBeforeRequest;
+    private long inputEventSequence;
+    private long inputSequenceBeforeRequest;
     private int spriteOffsetX;
+    private int smokeInputStage;
     private boolean resizeRequested;
-    private boolean smokeInputRequested;
-    private boolean requestedCursorEventObserved;
+    private boolean requestedBarEventObserved;
+    private boolean requestedViewportEventObserved;
     private boolean smokeCompleted;
     private boolean disposed;
 
@@ -94,6 +104,7 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             loadTiledProbe();
             runAudioProbe();
             installInputProcessor();
+            recordInputPolicy();
             fixedTimestepLoop = FixedTimestepLoop.createDefault();
             recordTimingPolicy();
             evidence.append("lifecycle.log", "create.end");
@@ -150,6 +161,12 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
 
     @Override
     public void pause() {
+        if (
+            inputProcessor != null
+                && !(configuration.smoke() && smokeCompleted)
+        ) {
+            inputProcessor.focusLost();
+        }
         if (fixedTimestepLoop != null) {
             fixedTimestepLoop.pause();
         }
@@ -162,6 +179,9 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     public void resume() {
         if (fixedTimestepLoop != null) {
             fixedTimestepLoop.resume();
+        }
+        if (inputProcessor != null) {
+            inputProcessor.focusGained();
         }
         if (evidence != null) {
             evidence.append("lifecycle.log", "resume");
@@ -181,6 +201,7 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
 
         try {
             recordTimingMetrics();
+            recordInputMetrics();
             disposables.disposeAll(line -> evidence.append("dispose.log", line));
             if (configuration.smoke() && !smokeCompleted) {
                 throw new IllegalStateException(
@@ -198,7 +219,22 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
                     + fixtureIndex
                     + "\n"
                     + "input.events="
-                    + inputEventSequence
+                    + inputProcessor.queueMetrics().acceptedEventCount()
+                    + "\n"
+                    + "input.ticks="
+                    + inputProcessor.nextTickIndex()
+                    + "\n"
+                    + "input.queue.capacity="
+                    + inputProcessor.queueMetrics().capacity()
+                    + "\n"
+                    + "input.queue.coalesced-movements="
+                    + inputProcessor.queueMetrics().coalescedMovementCount()
+                    + "\n"
+                    + "input.queue.overflows="
+                    + inputProcessor.queueMetrics().overflowCount()
+                    + "\n"
+                    + "input.queue.pending="
+                    + inputProcessor.queueMetrics().pendingEventCount()
                     + "\n"
                     + "disposables="
                     + disposables.size()
@@ -399,7 +435,10 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     }
 
     private void installInputProcessor() {
-        inputProcessor = new SpikeInputProcessor();
+        inputProcessor = new GdxInputAdapter(
+            new TickInput(),
+            this::currentInputMapping
+        );
         Gdx.input.setInputProcessor(inputProcessor);
         require(
             Gdx.input.getInputProcessor() == inputProcessor,
@@ -413,7 +452,145 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     }
 
     private void updateSimulation(double fixedDeltaSeconds) {
+        InputSnapshot input = inputProcessor.nextSnapshot();
         simulationTimeSeconds += fixedDeltaSeconds;
+        inputEventSequence = inputProcessor.queueMetrics().acceptedEventCount();
+        if (input.processedEventCount() > 0) {
+            evidence.append("input.log", formatInputSnapshot(input));
+        }
+        if (input.isKeyPressed(Input.Keys.ESCAPE)) {
+            Gdx.app.exit();
+        } else if (input.isKeyPressed(Input.Keys.SPACE)) {
+            spriteOffsetX = spriteOffsetX == 0 ? 8 : 0;
+        }
+        if (input.pointer().movedThisTick()) {
+            var pointer = input.pointer().position();
+            if (!configuration.smoke() && canPointerAffectVirtualState(input)) {
+                spriteOffsetX = 8;
+            } else if (
+                smokeInputStage == 1
+                    && isNear(pointer.screenX(), BAR_PROBE_X)
+                    && isNear(pointer.screenY(), BAR_PROBE_Y)
+            ) {
+                require(
+                    pointer.isInBars(),
+                    "The bar probe was not identified as an empty bar region."
+                );
+                requestedBarEventObserved = true;
+            } else if (
+                smokeInputStage == 2
+                    && isNear(pointer.screenX(), VIEWPORT_PROBE_X)
+                    && isNear(pointer.screenY(), VIEWPORT_PROBE_Y)
+            ) {
+                require(
+                    pointer.isInViewport(),
+                    "The viewport probe was not mapped into virtual space."
+                );
+                requestedViewportEventObserved = true;
+                spriteOffsetX = 8;
+            }
+        }
+    }
+
+    private ScreenToVirtual currentInputMapping() {
+        int logicalWidth = Gdx.graphics.getWidth();
+        int logicalHeight = Gdx.graphics.getHeight();
+        int backbufferWidth = Gdx.graphics.getBackBufferWidth();
+        int backbufferHeight = Gdx.graphics.getBackBufferHeight();
+        IntegerViewport viewport = IntegerViewport.calculate(
+            backbufferWidth,
+            backbufferHeight,
+            VIRTUAL_WIDTH,
+            VIRTUAL_HEIGHT
+        );
+        return new ScreenToVirtual(
+            logicalWidth,
+            logicalHeight,
+            backbufferWidth,
+            backbufferHeight,
+            viewport.x(),
+            viewport.y(),
+            viewport.width(),
+            viewport.height(),
+            VIRTUAL_WIDTH,
+            VIRTUAL_HEIGHT
+        );
+    }
+
+    private void recordInputPolicy() {
+        InputEventQueue.Metrics metrics = inputProcessor.queueMetrics();
+        evidence.append(
+            "input.log",
+            "queue.capacity="
+                + metrics.capacity()
+                + ";overflow=fail-fast"
+                + ";coalescence=adjacent-pointer-movement-only"
+        );
+    }
+
+    private void recordInputMetrics() {
+        if (inputProcessor == null || evidence == null) {
+            return;
+        }
+        InputEventQueue.Metrics metrics = inputProcessor.queueMetrics();
+        evidence.append(
+            "input.log",
+            "ticks="
+                + inputProcessor.nextTickIndex()
+                + ";accepted-events="
+                + metrics.acceptedEventCount()
+                + ";coalesced-movements="
+                + metrics.coalescedMovementCount()
+                + ";overflows="
+                + metrics.overflowCount()
+                + ";pending="
+                + metrics.pendingEventCount()
+        );
+    }
+
+    private static String formatInputSnapshot(InputSnapshot input) {
+        var pointer = input.pointer().position();
+        return "tick="
+            + input.tickIndex()
+            + ";events="
+            + input.processedEventCount()
+            + ";keys.down="
+            + input.keysDown()
+            + ";keys.pressed="
+            + input.keysPressed()
+            + ";keys.released="
+            + input.keysReleased()
+            + ";buttons.down="
+            + input.mouseButtonsDown()
+            + ";buttons.pressed="
+            + input.mouseButtonsPressed()
+            + ";buttons.released="
+            + input.mouseButtonsReleased()
+            + ";pointer.screen="
+            + pointer.screenX()
+            + ","
+            + pointer.screenY()
+            + ";pointer.virtual="
+            + pointer.virtualX()
+            + ","
+            + pointer.virtualY()
+            + ";pointer.region="
+            + pointer.region()
+            + ";pointer.delta="
+            + input.pointer().virtualDeltaX()
+            + ","
+            + input.pointer().virtualDeltaY()
+            + ";scroll="
+            + input.scrollX()
+            + ","
+            + input.scrollY()
+            + ";focused="
+            + input.focused();
+    }
+
+    static boolean canPointerAffectVirtualState(InputSnapshot input) {
+        return input.pointer().movedThisTick()
+            && input.pointer().position().isInViewport();
     }
 
     private void recordTimingPolicy() {
@@ -567,33 +744,70 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         }
 
         if (fixtureIndex == 1) {
-            if (!smokeInputRequested) {
-                smokeInputRequested = true;
+            if (smokeInputStage == 0) {
+                smokeInputStage = 1;
                 inputSequenceBeforeRequest = inputEventSequence;
-                Gdx.input.setCursorPosition(17, 29);
+                Gdx.input.setCursorPosition(BAR_PROBE_X, BAR_PROBE_Y);
                 evidence.append(
                     "probe.log",
-                    "input.request=cursor(17,29);sequence="
+                    "input.request=bar-cursor("
+                        + BAR_PROBE_X
+                        + ","
+                        + BAR_PROBE_Y
+                        + ");sequence="
                         + inputSequenceBeforeRequest
                 );
                 return;
             }
-            if (!requestedCursorEventObserved) {
+            if (smokeInputStage == 1 && !requestedBarEventObserved) {
                 inputWaitFrames++;
                 require(
                     inputWaitFrames <= 120,
-                    "GLFW cursor event did not reach the libGDX InputProcessor."
+                    "GLFW bar cursor event did not reach the tick snapshot."
+                );
+                return;
+            }
+            if (smokeInputStage == 1) {
+                require(
+                    inputEventSequence > inputSequenceBeforeRequest
+                        && spriteOffsetX == 0,
+                    "Input from an empty bar region affected virtual state."
+                );
+                evidence.append(
+                    "probe.log",
+                    "input.mapping-bars=PASS;sequence=" + inputEventSequence
+                );
+                smokeInputStage = 2;
+                inputWaitFrames = 0;
+                inputSequenceBeforeRequest = inputEventSequence;
+                Gdx.input.setCursorPosition(VIEWPORT_PROBE_X, VIEWPORT_PROBE_Y);
+                evidence.append(
+                    "probe.log",
+                    "input.request=viewport-cursor("
+                        + VIEWPORT_PROBE_X
+                        + ","
+                        + VIEWPORT_PROBE_Y
+                        + ");sequence="
+                        + inputSequenceBeforeRequest
+                );
+                return;
+            }
+            if (!requestedViewportEventObserved) {
+                inputWaitFrames++;
+                require(
+                    inputWaitFrames <= 120,
+                    "GLFW viewport cursor event did not reach the tick snapshot."
                 );
                 return;
             }
             require(
                 inputEventSequence > inputSequenceBeforeRequest
                     && spriteOffsetX == 8,
-                "The backend cursor event did not update the sprite."
+                "The mapped viewport event did not update the sprite."
             );
             evidence.append(
                 "probe.log",
-                "input.backend-event=PASS;sequence="
+                "input.backend-event=PASS;mapping=VIEWPORT;sequence="
                     + inputEventSequence
                     + ";sprite.offset="
                     + spriteOffsetX
@@ -887,6 +1101,10 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         }
     }
 
+    private static boolean isNear(int actual, int expected) {
+        return Math.abs(actual - expected) <= CURSOR_PROBE_TOLERANCE;
+    }
+
     private static void throwUnchecked(Throwable failure) {
         if (failure instanceof RuntimeException runtimeException) {
             throw runtimeException;
@@ -895,51 +1113,6 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             throw error;
         }
         throw new IllegalStateException(failure);
-    }
-
-    private final class SpikeInputProcessor extends InputAdapter {
-        @Override
-        public boolean mouseMoved(int screenX, int screenY) {
-            inputEventSequence++;
-            if (!configuration.smoke()) {
-                spriteOffsetX = 8;
-            } else if (
-                smokeInputRequested
-                    && Math.abs(screenX - 17) <= 2
-                    && Math.abs(screenY - 29) <= 2
-            ) {
-                requestedCursorEventObserved = true;
-                spriteOffsetX = 8;
-            }
-            evidence.append(
-                "probe.log",
-                "input.event=mouseMoved("
-                    + screenX
-                    + ","
-                    + screenY
-                    + ");sequence="
-                    + inputEventSequence
-            );
-            return true;
-        }
-
-        @Override
-        public boolean keyDown(int keycode) {
-            inputEventSequence++;
-            evidence.append(
-                "probe.log",
-                "input.event=keyDown("
-                    + Input.Keys.toString(keycode)
-                    + ");sequence="
-                    + inputEventSequence
-            );
-            if (keycode == Input.Keys.ESCAPE) {
-                Gdx.app.exit();
-            } else if (keycode == Input.Keys.SPACE) {
-                spriteOffsetX = spriteOffsetX == 0 ? 8 : 0;
-            }
-            return true;
-        }
     }
 
     private record Fixture(

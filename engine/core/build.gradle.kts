@@ -27,6 +27,7 @@ sourceSets {
             include(
                 "engine/api/**/*.java",
                 "engine/core/Timer.java",
+                "engine/incubator/runtime/input/**/*.java",
                 "engine/incubator/runtime/time/**/*.java",
                 "engine/math/Vector2.java",
                 "engine/util/**/*.java",
