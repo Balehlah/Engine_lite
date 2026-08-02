@@ -7,7 +7,9 @@ import java.util.Objects;
  * Owns deterministic scene transitions and isolated {@link GameContext} executions.
  *
  * <p>Scene requests are FIFO. Requests made by any lifecycle callback are applied only after
- * that callback returns, so an update or render never observes a half-applied transition.</p>
+ * that callback returns, so an update or render never observes a half-applied transition.
+ * Host lifecycle commands such as {@link #restart(RuntimeScene)} and {@link #close()} are
+ * accepted only outside lifecycle callbacks.</p>
  */
 public final class GameRuntime implements AutoCloseable {
     private final ArrayDeque<RuntimeScene> pendingScenes = new ArrayDeque<>();
@@ -85,6 +87,7 @@ public final class GameRuntime implements AutoCloseable {
 
     public void restart(RuntimeScene initialScene) {
         requireRuntimeOpen();
+        requireHostBoundary("restart");
         Objects.requireNonNull(initialScene, "initialScene");
         Throwable cleanupFailure = closeExecutionCapture();
         if (cleanupFailure != null) {
@@ -115,6 +118,7 @@ public final class GameRuntime implements AutoCloseable {
         if (closed) {
             return;
         }
+        requireHostBoundary("close");
         Throwable failure = closeExecutionCapture();
         closed = true;
         if (failure != null) {
@@ -278,6 +282,14 @@ public final class GameRuntime implements AutoCloseable {
     private void requireRuntimeOpen() {
         if (closed) {
             throw new IllegalStateException("GameRuntime is closed");
+        }
+    }
+
+    private void requireHostBoundary(String operation) {
+        if (inCallback || applyingTransitions) {
+            throw new IllegalStateException(
+                operation + " is allowed only outside lifecycle callbacks"
+            );
         }
     }
 

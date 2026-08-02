@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 /**
  * Mutable state that exists for exactly one game execution and is never global.
  */
-public final class GameContext implements AutoCloseable {
+public final class GameContext {
     private final long executionId;
     private final OwnedResourceRegistry resources = new OwnedResourceRegistry();
     private final WorldState world = new WorldState(resources);
@@ -95,8 +95,7 @@ public final class GameContext implements AutoCloseable {
         }
     }
 
-    @Override
-    public void close() {
+    void close() {
         if (closed || closing) {
             return;
         }

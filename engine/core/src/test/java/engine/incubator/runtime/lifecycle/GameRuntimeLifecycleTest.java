@@ -3,6 +3,8 @@ package engine.incubator.runtime.lifecycle;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -14,6 +16,44 @@ import org.junit.jupiter.api.Test;
 
 @Tag("specification")
 final class GameRuntimeLifecycleTest {
+    @Test
+    void hostLifecycleCommandsAreRejectedInsideCallbacksWithoutMutatingExecution() {
+        GameRuntime runtime = new GameRuntime();
+        GameContext initialContext = runtime.context();
+        List<String> calls = new ArrayList<>();
+        RecordingScene replacement = new RecordingScene("replacement", calls, ignored -> {
+        });
+        RecordingScene initial = new RecordingScene("initial", calls, ignored -> {
+            assertThrows(IllegalStateException.class, () -> runtime.restart(replacement));
+            assertThrows(IllegalStateException.class, runtime::close);
+        });
+
+        runtime.start(initial);
+        runtime.fixedUpdate(1.0 / 60.0);
+        runtime.render(0.0);
+
+        assertAll(
+            () -> assertSame(initialContext, runtime.context()),
+            () -> assertFalse(initialContext.isClosed()),
+            () -> assertFalse(runtime.isClosed()),
+            () -> assertEquals(1L, runtime.metrics().executionsStarted()),
+            () -> assertEquals(0L, runtime.metrics().restarts()),
+            () -> assertEquals(
+                List.of(
+                    "initial.create",
+                    "initial.enter",
+                    "initial.update.begin",
+                    "initial.update.end",
+                    "initial.render"
+                ),
+                calls
+            )
+        );
+
+        runtime.close();
+        assertTrue(runtime.metrics().lastClosedContext().isClean());
+    }
+
     @Test
     void callbackRequestedTransitionRunsOnlyAtTheSafeUpdateBoundary() {
         List<String> calls = new ArrayList<>();

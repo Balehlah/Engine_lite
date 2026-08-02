@@ -29,6 +29,7 @@ ou modificados.
 | Contexto | Uma instância nova de `GameContext` por execução/restart |
 | Lifecycle | `create → enter → fixedUpdate/render → exit → dispose` |
 | Trocas | Fila FIFO drenada somente fora de callbacks |
+| Autoridade | `restart`/`close` apenas no host e fora de callbacks |
 | Ownership | Comparação por identidade; um owner ativo por recurso |
 | Descarte | Uma tentativa por recurso, ordem reversa, owner idempotente |
 | Falhas | Cleanup completo; falha primária preservada e demais suprimidas |
@@ -62,6 +63,26 @@ ou modificados.
 - [x] **Não há singleton mutável no runtime novo.**
   `NoMutableSingletonTest` inspeciona todos os tipos públicos do pacote e
   rejeita qualquer campo estático mutável.
+
+## Remediação da primeira revisão independente
+
+A primeira análise do `technical_coordinator` bloqueou o avanço por três
+casos não cobertos: `restart`/`close` reentrantes durante callbacks, autoridade
+pública de shutdown em `GameContext`/`OwnedResourceRegistry` e remoção por
+`equals` na lista interna de `WorldState`. Os três foram corrigidos e protegidos
+por regressão:
+
+- `hostLifecycleCommandsAreRejectedInsideCallbacksWithoutMutatingExecution`
+  comprova que comandos do host são rejeitados e não trocam nem fecham o
+  contexto ativo;
+- `LifecycleAuthorityTest` impede que contexto e registro voltem a expor
+  `AutoCloseable`, `close` ou operações públicas de lifecycle de owners;
+- `WorldStateIdentityTest` usa duas entidades distintas que são iguais por
+  `equals` e comprova que a instância exata solicitada é removida.
+
+A suíte direcionada do pacote lifecycle executou 17 testes, com zero falhas,
+erros ou skips. Uma segunda revisão dos três papéis permanece obrigatória antes
+do fechamento.
 
 ## Ordem observada e falhas injetadas
 
@@ -97,22 +118,23 @@ gradlew.bat :engine:core:test :engine:gdx:test
 ```
 
 Resultado: `BUILD SUCCESSFUL`; todos os testes de core e GDX passaram, incluindo
-os 15 casos novos (seis invocações parametrizadas de falha).
+os 18 casos novos (seis invocações parametrizadas de falha e três regressões
+originadas na revisão).
 
 Gate canônico final:
 
 ```text
 gradlew.bat --no-daemon clean test --no-build-cache --rerun-tasks
-  -PtestRandomSeed=1717006
-  -PisolatedBuildRoot=C:\tmp\engine-lite-issue17-final-1717006
+  -PtestRandomSeed=1717018
+  -PisolatedBuildRoot=C:\tmp\engine-lite-issue17-reviewfix-final-1717018
 ```
 
-Resultado: `BUILD SUCCESSFUL` em 33 s; 40 tasks acionáveis, 34 executadas e seis
+Resultado: `BUILD SUCCESSFUL` em 56 s; 40 tasks acionáveis, 34 executadas e seis
 atualizadas. Relatórios JUnit:
 
 | Módulo | Testes | Falhas/erros | Skips esperados |
 |---|---:|---:|---:|
-| `engine:core` | 45 | 0 | 0 |
+| `engine:core` | 48 | 0 | 0 |
 | `engine:gdx` | 27 | 0 | 0 |
 | `desktop` | 34 | 0 | 12 |
 

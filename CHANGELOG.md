@@ -43,7 +43,8 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Adapter libGDX que reduz callbacks a eventos, aplica `screenToVirtual` por
   tick após resize/DPI e identifica explicitamente barras do viewport.
 - `GameContext` incubador por execução, lifecycle determinístico de cenas,
-  ownership único de entidades/eventos/assets/recursos e métricas de leak.
+  ownership único de entidades/eventos/assets/recursos, autoridade de shutdown
+  exclusiva do host e métricas de leak.
 - Adapter libGDX que conecta o novo lifecycle ao scheduler fixed timestep sem
   ampliar a API estável ou contaminar `engine:core` com o backend.
 

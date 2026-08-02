@@ -252,12 +252,18 @@ fila FIFO e só são aplicados depois que o callback atual termina. Exceções e
 qualquer fase fecham a execução por `finally`, preservam a falha original e
 acrescentam falhas de cleanup como suprimidas.
 
+`restart` e `close` são comandos exclusivos do host e são rejeitados durante
+callbacks. Cenas podem registrar recursos no owner recebido, mas não expõem
+autoridade pública para fechar `GameContext`, encerrar o registro ou manipular
+o lifecycle de owners.
+
 Entidades, eventos, assets e recursos declaram um único owner por identidade.
 O owner é liberado de forma idempotente, recursos são descartados uma vez em
 ordem inversa ao registro e `ResourceMetrics` expõe owners vivos, tentativas,
-falhas e leaks. `restart` fecha integralmente o contexto anterior antes de
-criar o seguinte. `GdxGameRuntimeLoop` conecta esse contrato ao scheduler fixo
-do backend libGDX sem introduzir dependências gráficas em `engine:core`.
+falhas e leaks. Fora de callbacks, `restart` fecha integralmente o contexto
+anterior antes de criar o seguinte. `GdxGameRuntimeLoop` conecta esse contrato
+ao scheduler fixo do backend libGDX sem introduzir dependências gráficas em
+`engine:core`.
 
 ### Controles do Demo
 

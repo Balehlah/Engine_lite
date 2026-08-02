@@ -14,7 +14,7 @@ import java.util.Set;
  * <p>The registry is intentionally single-threaded. Owners and resources are compared by
  * identity, avoiding accidental ownership aliases through {@link Object#equals(Object)}.</p>
  */
-public final class OwnedResourceRegistry implements AutoCloseable {
+public final class OwnedResourceRegistry {
     private final IdentityHashMap<Object, OwnerRegistration> owners = new IdentityHashMap<>();
     private final IdentityHashMap<Object, ResourceRegistration<?>> resources =
         new IdentityHashMap<>();
@@ -29,7 +29,7 @@ public final class OwnedResourceRegistry implements AutoCloseable {
     private long ownersDisposed;
     private boolean closed;
 
-    public void registerOwner(Object owner, String name) {
+    void registerOwner(Object owner, String name) {
         Objects.requireNonNull(owner, "owner");
         requireName(name, "owner name");
         requireOpen();
@@ -75,7 +75,7 @@ public final class OwnedResourceRegistry implements AutoCloseable {
         return resource;
     }
 
-    public void disposeOwner(Object owner) {
+    void disposeOwner(Object owner) {
         Objects.requireNonNull(owner, "owner");
         OwnerRegistration registration = owners.get(owner);
         if (registration == null) {
@@ -108,8 +108,7 @@ public final class OwnedResourceRegistry implements AutoCloseable {
         }
     }
 
-    @Override
-    public void close() {
+    void close() {
         if (closed) {
             return;
         }

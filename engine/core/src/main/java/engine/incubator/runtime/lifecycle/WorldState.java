@@ -35,7 +35,7 @@ public final class WorldState {
             return false;
         }
         List<Object> entities = entitiesByOwner.get(owner);
-        entities.remove(entity);
+        removeByIdentity(entities, entity);
         if (entities.isEmpty()) {
             entitiesByOwner.remove(owner);
         }
@@ -66,5 +66,15 @@ public final class WorldState {
     void clear() {
         entitiesByOwner.clear();
         ownersByEntity.clear();
+    }
+
+    private static void removeByIdentity(List<Object> entities, Object target) {
+        for (int index = 0; index < entities.size(); index++) {
+            if (entities.get(index) == target) {
+                entities.remove(index);
+                return;
+            }
+        }
+        throw new IllegalStateException("Entity ownership indexes are inconsistent");
     }
 }
