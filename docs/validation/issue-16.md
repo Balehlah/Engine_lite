@@ -4,8 +4,9 @@
 - Branch: `codex/issue-16-input-snapshots`
 - Base consumida: `84b90f7`
 - Issue: [#16](https://github.com/Balehlah/Engine_lite/issues/16)
-- Estado: implementação, validação local e revisão independente concluídas com
-  `qa_validator` PASS; CI remota permanece gate de publicação
+- Estado: implementação, validação local, revisão independente e CI remota
+  Windows/Linux em Java 21/25 concluídas; revisão dos responsáveis permanece
+  gate antes de merge/fechamento
 
 ## Gate de entrada e escopo
 
@@ -166,6 +167,23 @@ distribuição passaram. O smoke independente também passou de CWD externo com
 viewport corretos e dez disposables liberados uma vez. Parecer final:
 **PASS técnico, zero defeitos bloqueadores**.
 
+## Evidência remota
+
+A implementação foi publicada no PR draft
+[#63](https://github.com/Balehlah/Engine_lite/pull/63), commit `33ab772`. A
+execução [30735170365](https://github.com/Balehlah/Engine_lite/actions/runs/30735170365)
+terminou com sucesso nos dois sistemas suportados:
+
+- [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30735170365/job/91462556813):
+  `clean test` Java 21, compatibilidade Java 25, distribuição e smokes do ZIP em
+  Java 21/25 aprovados em 2m28s;
+- [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30735170365/job/91462556852):
+  os mesmos gates, mais provisionamento/rejeição controlada do Mesa auditado,
+  aprovados em 2m48s.
+
+Os dois jobs verificaram que o ZIP canônico permaneceu intacto depois dos
+smokes e publicaram relatórios JUnit/HTML, pacote e evidências de runtime.
+
 ## Riscos residuais e rollback
 
 Riscos não bloqueadores:
@@ -182,9 +200,8 @@ Rollback: reverter os arquivos da Issue #16 remove o namespace de input, o
 adapter e a integração pontual do spike. O loop fixo, Java2D legado, assets,
 saves e API estável permanecem intactos.
 
-## Gates externos restantes
+## Gates humanos restantes
 
-Antes de fechar a issue, a branch publicada ainda deve receber CI verde em
-Windows/Linux (Java 21 e smoke adicional em Java 25), revisão do papel
-`engine-developer` e aprovação do `technical_coordinator`. Nenhum gate externo
-é inferido a partir dos resultados locais.
+Antes de merge ou fechamento, o PR draft ainda deve receber revisão do papel
+`engine-developer` e aprovação do `technical_coordinator`. CI, QA e critérios
+técnicos já estão comprovados; nenhum deles substitui a aprovação humana.
