@@ -192,6 +192,29 @@ atribuição de assets e o conteúdo dos JARs. Os relatórios são gerados em
 `build/reports/licenses`, `build/reports/jars` e
 `engine/core/build/reports/api`.
 
+### Runtime determinístico incubador
+
+O runtime backend-neutral em `engine.incubator.runtime.time` usa clock
+monotônico injetável, acumulador puro e política imutável escolhida na
+inicialização. A configuração padrão é 60 updates por segundo, clamp de 250 ms
+por frame e no máximo cinco updates de catch-up. Cada update recebe exatamente
+`1.0 / 60.0` segundo; o arredondamento do período do clock não altera o `dt`
+lógico.
+
+O adapter `FixedTimestepLoop` integra esse contrato ao callback de render do
+libGDX: executa zero ou mais updates e sempre um render, com `alpha` no intervalo
+`[0, 1)`. Clamp de wall time, descarte de backlog de simulação e tempo inativo
+por pause ou `timeScale=0` possuem métricas separadas. Pause, resume, single-step
+e time scale são expostos pelo adapter sem acumular tempo ocorrido enquanto a
+simulação estava parada.
+
+`SystemNanoClock` é o clock real; `FakeNanoClock` reproduz sequências sintéticas
+sem espera. O spike mostra as métricas pelo `FixedTimestepDebugOverlay` em
+execução interativa e registra a política e os totais em `timing.log` no smoke.
+O overlay fica oculto durante a captura dos goldens para não alterar as fixtures
+pixel-perfect. O backend Java2D continua como fallback legado e não foi migrado
+por esta entrega.
+
 ### Controles do Demo
 
 - **WASD / Setas**: Mover

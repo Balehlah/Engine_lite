@@ -59,6 +59,9 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     private FrameBuffer virtualFrameBuffer;
     private TextureRegion virtualFrameBufferRegion;
     private SpikeInputProcessor inputProcessor;
+    private FixedTimestepLoop fixedTimestepLoop;
+    private FixedTimestepDebugOverlay fixedTimestepDebugOverlay;
+    private double simulationTimeSeconds;
 
     private int fixtureIndex;
     private int fixtureFrames;
@@ -91,6 +94,8 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             loadTiledProbe();
             runAudioProbe();
             installInputProcessor();
+            fixedTimestepLoop = FixedTimestepLoop.createDefault();
+            recordTimingPolicy();
             evidence.append("lifecycle.log", "create.end");
         } catch (Throwable failure) {
             recordFailure("create", failure);
@@ -119,11 +124,24 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     @Override
     public void render() {
         try {
-            renderVirtualScene();
-            renderBackbuffer();
-            if (configuration.smoke()) {
-                advanceSmoke();
-            }
+            fixedTimestepLoop.runFrame(
+                this::updateSimulation,
+                (alpha, metrics) -> {
+                    renderVirtualScene();
+                    renderBackbuffer();
+                    if (!configuration.smoke()) {
+                        fixedTimestepDebugOverlay.render(
+                            batch,
+                            backbufferProjection,
+                            Gdx.graphics.getBackBufferHeight(),
+                            metrics
+                        );
+                    }
+                    if (configuration.smoke()) {
+                        advanceSmoke();
+                    }
+                }
+            );
         } catch (Throwable failure) {
             recordFailure("render", failure);
             throwUnchecked(failure);
@@ -132,6 +150,9 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
 
     @Override
     public void pause() {
+        if (fixedTimestepLoop != null) {
+            fixedTimestepLoop.pause();
+        }
         if (evidence != null) {
             evidence.append("lifecycle.log", "pause");
         }
@@ -139,6 +160,9 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
 
     @Override
     public void resume() {
+        if (fixedTimestepLoop != null) {
+            fixedTimestepLoop.resume();
+        }
         if (evidence != null) {
             evidence.append("lifecycle.log", "resume");
         }
@@ -156,6 +180,7 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         Gdx.input.setInputProcessor(null);
 
         try {
+            recordTimingMetrics();
             disposables.disposeAll(line -> evidence.append("dispose.log", line));
             if (configuration.smoke() && !smokeCompleted) {
                 throw new IllegalStateException(
@@ -288,6 +313,10 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         );
         virtualFrameBufferRegion.flip(false, true);
         batch = disposables.own("sprite-batch", new SpriteBatch());
+        fixedTimestepDebugOverlay = disposables.own(
+            "fixed-timestep-debug-overlay",
+            new FixedTimestepDebugOverlay()
+        );
 
         virtualProjection.setToOrtho2D(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
         evidence.append(
@@ -380,6 +409,55 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             "probe.log",
             "input.processor=PASS;implementation="
                 + Gdx.input.getClass().getName()
+        );
+    }
+
+    private void updateSimulation(double fixedDeltaSeconds) {
+        simulationTimeSeconds += fixedDeltaSeconds;
+    }
+
+    private void recordTimingPolicy() {
+        var timing = fixedTimestepLoop.configuration();
+        evidence.append(
+            "timing.log",
+            "fixed.updates-per-second="
+                + timing.updatesPerSecond()
+                + ";fixed.dt-seconds="
+                + timing.fixedDeltaSeconds()
+                + ";fixed.step-nanos="
+                + timing.fixedStepNanos()
+                + ";clamp-nanos="
+                + timing.maximumFrameTimeNanos()
+                + ";max-catch-up="
+                + timing.maximumCatchUpSteps()
+        );
+    }
+
+    private void recordTimingMetrics() {
+        if (fixedTimestepLoop == null || evidence == null) {
+            return;
+        }
+        var metrics = fixedTimestepLoop.metrics();
+        evidence.append(
+            "timing.log",
+            "frames="
+                + metrics.frameCount()
+                + ";updates="
+                + metrics.updateCount()
+                + ";simulation-seconds="
+                + simulationTimeSeconds
+                + ";alpha="
+                + metrics.interpolationAlpha()
+                + ";clamped-frames="
+                + metrics.clampedFrameCount()
+                + ";clamped-wall-nanos="
+                + metrics.clampedWallTimeNanos()
+                + ";catch-up-limit-hits="
+                + metrics.catchUpLimitHitCount()
+                + ";catch-up-discarded-nanos="
+                + metrics.catchUpDiscardedSimulationTimeNanos()
+                + ";inactive-wall-nanos="
+                + metrics.inactiveWallTimeNanos()
         );
     }
 

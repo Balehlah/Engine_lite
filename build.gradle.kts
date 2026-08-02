@@ -1060,7 +1060,10 @@ val verifyLegacyClassParity = tasks.register("verifyLegacyClassParity") {
                 root.walkTopDown()
                     .filter { it.isFile && it.extension == "class" }
                     .map { it.relativeTo(root).invariantSeparatorsPath }
-                    .filterNot { it.startsWith("engine/api/") }
+                    .filterNot {
+                        it.startsWith("engine/api/") ||
+                            it.startsWith("engine/incubator/runtime/time/")
+                    }
                     .toList()
             }
             .toSortedSet()

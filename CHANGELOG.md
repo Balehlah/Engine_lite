@@ -32,6 +32,11 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   Java2D como fallback legado.
 - Provisionamento efêmero e auditável de Mesa llvmpipe 26.1.1 para o smoke
   Windows hospedado.
+- Scheduler incubador backend-neutral com clock real/fake, acumulador puro,
+  fixed timestep configurável, clamp, catch-up limitado, `alpha`, pause,
+  single-step, time scale e telemetria explícita.
+- Adapter de loop e overlay de métricas para o backend libGDX, com render
+  independente da quantidade de updates lógicos.
 
 ### Alterado
 
@@ -44,6 +49,8 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   licenças e proveniência no pacote.
 - A distribuição remove classifiers e arquivos nativos da plataforma não
   suportada; o JAR `gdx-platform` é curado por allowlist reproduzível.
+- O smoke libGDX registra a política e as métricas do scheduler em `timing.log`
+  sem alterar os goldens de viewport.
 
 ### Documentação
 
@@ -57,6 +64,7 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Adicionados especificação reproduzível e registro de evidências da Issue #14.
 - Documentada a substituição histórica de D-002 por D-010 e a validação da
   Issue #60.
+- Adicionado o registro reproduzível de implementação e validação da Issue #15.
 
 ---
 
