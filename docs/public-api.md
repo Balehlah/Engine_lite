@@ -68,8 +68,8 @@ do consumidor.
 `inspectJars` valida os cinco artifacts atuais:
 
 - `engine:core` é o único que contém `engine.api.*`;
-- `engine:gdx` contém somente a implementação `engine.incubator.gdx.spike` e
-  os recursos internos do spike da Issue #14;
+- `engine:gdx` contém somente as implementações incubadoras isoladas de spike,
+  input e runtime, além dos recursos internos do spike da Issue #14;
 - o JAR principal de `desktop` contém somente o launcher incubador LWJGL3 e o
   classifier `legacy` não duplica a API estável;
 - `game` não empacota classes `engine.*`;
