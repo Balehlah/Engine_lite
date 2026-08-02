@@ -466,15 +466,22 @@ val inspectJars = tasks.register("inspectJars") {
             .filter { it.endsWith(".class") }
             .toSet()
         val requiredEngineGdxClasses = setOf(
+            "engine/incubator/gdx/input/GdxInputAdapter.class",
             "engine/incubator/gdx/spike/LibGdxSpikeApplication.class",
             "engine/incubator/gdx/spike/SpikeRunConfiguration.class",
         )
         check(engineGdxClasses.containsAll(requiredEngineGdxClasses)) {
             "engine:gdx is missing spike classes: ${requiredEngineGdxClasses - engineGdxClasses}"
         }
-        check(engineGdxClasses.all { it.startsWith("engine/incubator/gdx/spike/") }) {
-            "engine:gdx may package only the isolated spike implementation: " +
-                engineGdxClasses.filterNot { it.startsWith("engine/incubator/gdx/spike/") }
+        check(engineGdxClasses.all {
+            it.startsWith("engine/incubator/gdx/spike/") ||
+                it.startsWith("engine/incubator/gdx/input/")
+        }) {
+            "engine:gdx may package only isolated spike/input implementations: " +
+                engineGdxClasses.filterNot {
+                    it.startsWith("engine/incubator/gdx/spike/") ||
+                        it.startsWith("engine/incubator/gdx/input/")
+                }
         }
 
         val desktopClasses = entriesByJar.getValue("desktop")
@@ -542,7 +549,7 @@ val inspectJars = tasks.register("inspectJars") {
                     appendLine("$label=${file.name}; classes=$classes; notices=present")
                 }
                 appendLine("stable-api-owner=engine-core")
-                appendLine("engine-gdx=isolated-spike-and-assets")
+                appendLine("engine-gdx=isolated-spike-input-and-assets")
                 appendLine("desktop-main=lwjgl3-launcher")
                 appendLine("desktop-legacy=no-stable-api-duplication")
                 appendLine("game=no-engine-classes")
@@ -1062,6 +1069,7 @@ val verifyLegacyClassParity = tasks.register("verifyLegacyClassParity") {
                     .map { it.relativeTo(root).invariantSeparatorsPath }
                     .filterNot {
                         it.startsWith("engine/api/") ||
+                            it.startsWith("engine/incubator/runtime/input/") ||
                             it.startsWith("engine/incubator/runtime/time/")
                     }
                     .toList()

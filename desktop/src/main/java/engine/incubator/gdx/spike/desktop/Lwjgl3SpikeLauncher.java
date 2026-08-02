@@ -27,6 +27,7 @@ public final class Lwjgl3SpikeLauncher {
         windowConfiguration.setWindowedMode(INITIAL_WIDTH, INITIAL_HEIGHT);
         windowConfiguration.setResizable(true);
         windowConfiguration.setHdpiMode(HdpiMode.Logical);
+        windowConfiguration.setPauseWhenLostFocus(true);
         windowConfiguration.useVsync(true);
         windowConfiguration.setForegroundFPS(60);
         windowConfiguration.setIdleFPS(60);

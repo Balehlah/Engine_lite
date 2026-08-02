@@ -215,6 +215,29 @@ O overlay fica oculto durante a captura dos goldens para não alterar as fixture
 pixel-perfect. O backend Java2D continua como fallback legado e não foi migrado
 por esta entrega.
 
+### Input imutável por tick
+
+O runtime incubador em `engine.incubator.runtime.input` separa callbacks do
+backend do estado lógico. `InputEventQueue` preserva a ordem das bordas de
+teclado/botão, scroll e foco em uma fila limitada a 4.096 eventos por padrão;
+somente movimentos absolutos consecutivos do ponteiro podem ser coalescidos.
+Saturação que não pode ser coalescida falha imediatamente e incrementa a
+telemetria de overflow, sem descarte silencioso.
+
+Cada update fixo consome um `InputSnapshot` imutável. `down` persiste entre
+ticks, enquanto `pressed`, `released`, delta e scroll existem em exatamente um
+tick. Press e release rápidos permanecem simultaneamente observáveis no mesmo
+snapshot. Perda de foco libera teclas e botões mantidos e ignora callbacks de
+press tardios até o foco retornar.
+
+`ScreenToVirtual` aplica, no limite de cada tick, o tamanho lógico, backbuffer,
+viewport inteiro e resolução virtual atuais. Isso cobre resize e DPI sem
+capturar uma transformação obsoleta no callback, produz coordenadas virtuais
+com origem inferior esquerda e distingue `VIEWPORT`, `BARS` e
+`OUTSIDE_SURFACE`. O `GdxInputAdapter` somente traduz callbacks libGDX para essa
+fila; a simulação do spike reage exclusivamente aos snapshots. `FakeInput`
+reproduz scripts inteiramente em memória com a mesma sequência de snapshots.
+
 ### Controles do Demo
 
 - **WASD / Setas**: Mover

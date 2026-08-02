@@ -13,16 +13,19 @@ final class EvidenceWriterTest {
     Path evidenceDirectory;
 
     @Test
-    void beginRunRemovesTimingTelemetryFromAPreviousExecution() throws Exception {
+    void beginRunRemovesTickTelemetryFromAPreviousExecution() throws Exception {
         EvidenceWriter writer = new EvidenceWriter(evidenceDirectory);
         Path timingLog = evidenceDirectory.resolve("timing.log");
+        Path inputLog = evidenceDirectory.resolve("input.log");
         Path unrelatedFile = evidenceDirectory.resolve("runner-owned.log");
         Files.writeString(timingLog, "stale timing");
+        Files.writeString(inputLog, "stale input");
         Files.writeString(unrelatedFile, "owned by the package runner");
 
         writer.beginRun();
 
         assertFalse(Files.exists(timingLog));
+        assertFalse(Files.exists(inputLog));
         assertTrue(Files.exists(unrelatedFile));
     }
 }

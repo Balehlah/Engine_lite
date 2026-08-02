@@ -37,6 +37,11 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   single-step, time scale e telemetria explícita.
 - Adapter de loop e overlay de métricas para o backend libGDX, com render
   independente da quantidade de updates lógicos.
+- Input incubador backend-neutral com fila ordenada e limitada, snapshots
+  imutáveis por tick, bordas `pressed`/`released`, mouse virtual/delta/scroll,
+  foco e `FakeInput` determinístico.
+- Adapter libGDX que reduz callbacks a eventos, aplica `screenToVirtual` por
+  tick após resize/DPI e identifica explicitamente barras do viewport.
 
 ### Alterado
 
@@ -51,6 +56,8 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   suportada; o JAR `gdx-platform` é curado por allowlist reproduzível.
 - O smoke libGDX registra a política e as métricas do scheduler em `timing.log`
   sem alterar os goldens de viewport.
+- O smoke libGDX registra snapshots em `input.log`, exige fila sem overflow e
+  prova eventos físicos distintos em barras vazias e dentro do viewport.
 
 ### Documentação
 
@@ -65,6 +72,7 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Documentada a substituição histórica de D-002 por D-010 e a validação da
   Issue #60.
 - Adicionado o registro reproduzível de implementação e validação da Issue #15.
+- Adicionado o contrato e o registro reproduzível de validação da Issue #16.
 
 ---
 
