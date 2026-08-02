@@ -55,6 +55,67 @@ final class GameRuntimeLifecycleTest {
     }
 
     @Test
+    void resourceDisposersCannotReenterHostLifecycleCommands() {
+        GameRuntime runtime = new GameRuntime();
+        AtomicInteger disposedAssets = new AtomicInteger();
+        RuntimeScene replacement = new RecordingScene(
+            "replacement",
+            new ArrayList<>(),
+            ignored -> {
+            }
+        );
+        RuntimeScene scene = new RuntimeScene() {
+            @Override
+            public void create(GameContext context) {
+                context.assets().put(this, "survivor", new Object(), ignored -> {
+                    disposedAssets.incrementAndGet();
+                });
+                context.assets().put(this, "reentrant", new Object(), ignored -> {
+                    assertThrows(IllegalStateException.class, runtime::close);
+                    assertThrows(
+                        IllegalStateException.class,
+                        () -> runtime.restart(replacement)
+                    );
+                    disposedAssets.incrementAndGet();
+                });
+            }
+
+            @Override
+            public void enter(GameContext context) {
+            }
+
+            @Override
+            public void fixedUpdate(GameContext context, double fixedDeltaSeconds) {
+            }
+
+            @Override
+            public void render(GameContext context, double interpolationAlpha) {
+            }
+
+            @Override
+            public void exit(GameContext context) {
+            }
+
+            @Override
+            public void dispose(GameContext context) {
+            }
+        };
+
+        runtime.start(scene);
+        runtime.close();
+
+        RuntimeMetrics metrics = runtime.metrics();
+        assertAll(
+            () -> assertTrue(runtime.isClosed()),
+            () -> assertEquals(2, disposedAssets.get()),
+            () -> assertEquals(1L, metrics.executionsStarted()),
+            () -> assertEquals(0L, metrics.restarts()),
+            () -> assertEquals(0L, metrics.failedExecutions()),
+            () -> assertTrue(metrics.lastClosedContext().isClean())
+        );
+    }
+
+    @Test
     void callbackRequestedTransitionRunsOnlyAtTheSafeUpdateBoundary() {
         List<String> calls = new ArrayList<>();
         GameRuntime runtime = new GameRuntime();

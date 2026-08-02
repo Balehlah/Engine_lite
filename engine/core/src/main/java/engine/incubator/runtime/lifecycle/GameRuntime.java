@@ -9,7 +9,7 @@ import java.util.Objects;
  * <p>Scene requests are FIFO. Requests made by any lifecycle callback are applied only after
  * that callback returns, so an update or render never observes a half-applied transition.
  * Host lifecycle commands such as {@link #restart(RuntimeScene)} and {@link #close()} are
- * accepted only outside lifecycle callbacks.</p>
+ * accepted only while no lifecycle callback, transition, or execution cleanup is active.</p>
  */
 public final class GameRuntime implements AutoCloseable {
     private final ArrayDeque<RuntimeScene> pendingScenes = new ArrayDeque<>();
@@ -22,6 +22,7 @@ public final class GameRuntime implements AutoCloseable {
     private long failedExecutions;
     private boolean inCallback;
     private boolean applyingTransitions;
+    private boolean closingExecution;
     private boolean closed;
 
     public GameRuntime() {
@@ -244,32 +245,40 @@ public final class GameRuntime implements AutoCloseable {
     }
 
     private Throwable closeExecutionCapture() {
-        GameContext executionContext = context;
-        if (executionContext == null) {
-            pendingScenes.clear();
-            return null;
+        if (closingExecution) {
+            throw new IllegalStateException("Execution cleanup is already in progress");
         }
-
-        Throwable failure = null;
-        SceneState scene = activeScene;
-        activeScene = null;
-        pendingScenes.clear();
-        if (scene != null) {
-            failure = LifecycleFailures.append(
-                failure,
-                disposeScene(scene, executionContext)
-            );
-        }
+        closingExecution = true;
         try {
-            executionContext.close();
-        } catch (Throwable contextFailure) {
-            failure = LifecycleFailures.append(failure, contextFailure);
-        } finally {
+            GameContext executionContext = context;
+            if (executionContext == null) {
+                pendingScenes.clear();
+                return null;
+            }
+
+            Throwable failure = null;
+            SceneState scene = activeScene;
+            activeScene = null;
             pendingScenes.clear();
-            lastClosedContext = executionContext.snapshot();
-            context = null;
+            if (scene != null) {
+                failure = LifecycleFailures.append(
+                    failure,
+                    disposeScene(scene, executionContext)
+                );
+            }
+            try {
+                executionContext.close();
+            } catch (Throwable contextFailure) {
+                failure = LifecycleFailures.append(failure, contextFailure);
+            } finally {
+                pendingScenes.clear();
+                lastClosedContext = executionContext.snapshot();
+                context = null;
+            }
+            return failure;
+        } finally {
+            closingExecution = false;
         }
-        return failure;
     }
 
     private void requireExecution() {
@@ -286,9 +295,9 @@ public final class GameRuntime implements AutoCloseable {
     }
 
     private void requireHostBoundary(String operation) {
-        if (inCallback || applyingTransitions) {
+        if (inCallback || applyingTransitions || closingExecution) {
             throw new IllegalStateException(
-                operation + " is allowed only outside lifecycle callbacks"
+                operation + " is allowed only at an idle host boundary"
             );
         }
     }

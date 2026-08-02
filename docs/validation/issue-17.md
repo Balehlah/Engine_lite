@@ -29,7 +29,7 @@ ou modificados.
 | Contexto | Uma instância nova de `GameContext` por execução/restart |
 | Lifecycle | `create → enter → fixedUpdate/render → exit → dispose` |
 | Trocas | Fila FIFO drenada somente fora de callbacks |
-| Autoridade | `restart`/`close` apenas no host e fora de callbacks |
+| Autoridade | `restart`/`close` apenas no host, fora de callbacks e cleanup |
 | Ownership | Comparação por identidade; um owner ativo por recurso |
 | Descarte | Uma tentativa por recurso, ordem reversa, owner idempotente |
 | Falhas | Cleanup completo; falha primária preservada e demais suprimidas |
@@ -79,8 +79,11 @@ por regressão:
   `AutoCloseable`, `close` ou operações públicas de lifecycle de owners;
 - `WorldStateIdentityTest` usa duas entidades distintas que são iguais por
   `equals` e comprova que a instância exata solicitada é removida.
+- `resourceDisposersCannotReenterHostLifecycleCommands` protege todo o cleanup
+  contra `close`/`restart` reentrantes originados por um disposer e comprova que
+  os recursos seguintes ainda são liberados com métricas limpas.
 
-A suíte direcionada do pacote lifecycle executou 17 testes, com zero falhas,
+A suíte direcionada do pacote lifecycle executou 18 testes, com zero falhas,
 erros ou skips. Uma segunda revisão dos três papéis permanece obrigatória antes
 do fechamento.
 
@@ -118,23 +121,23 @@ gradlew.bat :engine:core:test :engine:gdx:test
 ```
 
 Resultado: `BUILD SUCCESSFUL`; todos os testes de core e GDX passaram, incluindo
-os 18 casos novos (seis invocações parametrizadas de falha e três regressões
-originadas na revisão).
+os 19 casos novos (seis invocações parametrizadas de falha e quatro regressões
+originadas nas revisões).
 
 Gate canônico final:
 
 ```text
 gradlew.bat --no-daemon clean test --no-build-cache --rerun-tasks
-  -PtestRandomSeed=1717018
-  -PisolatedBuildRoot=C:\tmp\engine-lite-issue17-reviewfix-final-1717018
+  -PtestRandomSeed=1717022
+  -PisolatedBuildRoot=C:\tmp\engine-lite-issue17-reentrancy-final-1717022
 ```
 
-Resultado: `BUILD SUCCESSFUL` em 56 s; 40 tasks acionáveis, 34 executadas e seis
+Resultado: `BUILD SUCCESSFUL` em 37 s; 40 tasks acionáveis, 34 executadas e seis
 atualizadas. Relatórios JUnit:
 
 | Módulo | Testes | Falhas/erros | Skips esperados |
 |---|---:|---:|---:|
-| `engine:core` | 48 | 0 | 0 |
+| `engine:core` | 49 | 0 | 0 |
 | `engine:gdx` | 27 | 0 | 0 |
 | `desktop` | 34 | 0 | 12 |
 
