@@ -12,7 +12,8 @@ import java.util.Set;
  * Registers exactly one owner for every resource and releases owners idempotently.
  *
  * <p>The registry is intentionally single-threaded. Owners and resources are compared by
- * identity, avoiding accidental ownership aliases through {@link Object#equals(Object)}.</p>
+ * identity, avoiding accidental ownership aliases through {@link Object#equals(Object)}.
+ * Once owner disposal starts, that owner cannot receive more resources or state.</p>
  */
 public final class OwnedResourceRegistry {
     private final IdentityHashMap<Object, OwnerRegistration> owners = new IdentityHashMap<>();
@@ -84,7 +85,11 @@ public final class OwnedResourceRegistry {
             }
             throw new IllegalArgumentException("Owner is not registered");
         }
+        if (registration.disposing) {
+            return;
+        }
 
+        registration.disposing = true;
         ownersDisposed++;
         Throwable failure = null;
         for (int index = registration.resources.size() - 1; index >= 0; index--) {
@@ -146,6 +151,9 @@ public final class OwnedResourceRegistry {
             }
             throw new IllegalArgumentException("Owner is not registered");
         }
+        if (registration.disposing) {
+            throw new IllegalStateException("Owner is being disposed");
+        }
         return registration;
     }
 
@@ -197,6 +205,7 @@ public final class OwnedResourceRegistry {
         private final String name;
         private final Set<String> resourceNames = new HashSet<>();
         private final List<ResourceRegistration<?>> resources = new ArrayList<>();
+        private boolean disposing;
         private OwnerRegistration(Object owner, String name) {
             this.owner = owner;
             this.name = name;

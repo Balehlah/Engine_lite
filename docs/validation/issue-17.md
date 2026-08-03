@@ -79,9 +79,10 @@ por regressão:
   `AutoCloseable`, `close` ou operações públicas de lifecycle de owners;
 - `WorldStateIdentityTest` usa duas entidades distintas que são iguais por
   `equals` e comprova que a instância exata solicitada é removida.
-- `resourceDisposersCannotReenterHostLifecycleCommands` protege todo o cleanup
-  contra `close`/`restart` reentrantes originados por um disposer e comprova que
-  os recursos seguintes ainda são liberados com métricas limpas.
+- `resourceDisposersCannotReenterLifecycleOrMutateTheirDisposingOwner` protege
+  todo o cleanup contra `close`, `restart`, `start` e `requestScene` reentrantes,
+  rejeita assets tardios no owner em descarte e comprova que os recursos
+  seguintes ainda são liberados com métricas limpas.
 
 A suíte direcionada do pacote lifecycle executou 18 testes, com zero falhas,
 erros ou skips. Uma segunda revisão dos três papéis permanece obrigatória antes
@@ -128,11 +129,11 @@ Gate canônico final:
 
 ```text
 gradlew.bat --no-daemon clean test --no-build-cache --rerun-tasks
-  -PtestRandomSeed=1717022
-  -PisolatedBuildRoot=C:\tmp\engine-lite-issue17-reentrancy-final-1717022
+  -PtestRandomSeed=1717026
+  -PisolatedBuildRoot=C:\tmp\engine-lite-issue17-cleanup-boundary-final-1717026
 ```
 
-Resultado: `BUILD SUCCESSFUL` em 37 s; 40 tasks acionáveis, 34 executadas e seis
+Resultado: `BUILD SUCCESSFUL` em 35 s; 40 tasks acionáveis, 34 executadas e seis
 atualizadas. Relatórios JUnit:
 
 | Módulo | Testes | Falhas/erros | Skips esperados |

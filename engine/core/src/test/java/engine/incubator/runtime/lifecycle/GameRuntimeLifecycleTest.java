@@ -55,12 +55,14 @@ final class GameRuntimeLifecycleTest {
     }
 
     @Test
-    void resourceDisposersCannotReenterHostLifecycleCommands() {
+    void resourceDisposersCannotReenterLifecycleOrMutateTheirDisposingOwner() {
         GameRuntime runtime = new GameRuntime();
         AtomicInteger disposedAssets = new AtomicInteger();
+        AtomicInteger disposedLateAssets = new AtomicInteger();
+        List<String> replacementCalls = new ArrayList<>();
         RuntimeScene replacement = new RecordingScene(
             "replacement",
-            new ArrayList<>(),
+            replacementCalls,
             ignored -> {
             }
         );
@@ -75,6 +77,23 @@ final class GameRuntimeLifecycleTest {
                     assertThrows(
                         IllegalStateException.class,
                         () -> runtime.restart(replacement)
+                    );
+                    assertThrows(
+                        IllegalStateException.class,
+                        () -> context.requestScene(replacement)
+                    );
+                    assertThrows(
+                        IllegalStateException.class,
+                        () -> runtime.start(replacement)
+                    );
+                    assertThrows(
+                        IllegalStateException.class,
+                        () -> context.assets().put(
+                            this,
+                            "late",
+                            new Object(),
+                            late -> disposedLateAssets.incrementAndGet()
+                        )
                     );
                     disposedAssets.incrementAndGet();
                 });
@@ -108,9 +127,16 @@ final class GameRuntimeLifecycleTest {
         assertAll(
             () -> assertTrue(runtime.isClosed()),
             () -> assertEquals(2, disposedAssets.get()),
+            () -> assertEquals(0, disposedLateAssets.get()),
+            () -> assertTrue(replacementCalls.isEmpty()),
             () -> assertEquals(1L, metrics.executionsStarted()),
             () -> assertEquals(0L, metrics.restarts()),
+            () -> assertEquals(1L, metrics.sceneTransitions()),
             () -> assertEquals(0L, metrics.failedExecutions()),
+            () -> assertEquals(
+                2L,
+                metrics.lastClosedContext().resources().resourcesRegistered()
+            ),
             () -> assertTrue(metrics.lastClosedContext().isClean())
         );
     }

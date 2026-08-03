@@ -256,7 +256,8 @@ acrescentam falhas de cleanup como suprimidas.
 callbacks, transições ou cleanup, inclusive dentro de um `ResourceDisposer`.
 Cenas podem registrar recursos no owner recebido, mas não expõem autoridade
 pública para fechar `GameContext`, encerrar o registro ou manipular o lifecycle
-de owners.
+de owners. Assim que o descarte de um owner começa, novas transições e novos
+registros de estado ou recursos nesse owner são rejeitados.
 
 Entidades, eventos, assets e recursos declaram um único owner por identidade.
 O owner é liberado de forma idempotente, recursos são descartados uma vez em

@@ -36,6 +36,7 @@ public final class GameRuntime implements AutoCloseable {
 
     public void start(RuntimeScene initialScene) {
         requireExecution();
+        requireNotClosingExecution("start");
         if (activeScene != null || !pendingScenes.isEmpty()) {
             throw new IllegalStateException("Execution is already started");
         }
@@ -44,6 +45,7 @@ public final class GameRuntime implements AutoCloseable {
 
     public void requestScene(RuntimeScene scene) {
         requireExecution();
+        requireNotClosingExecution("requestScene");
         pendingScenes.addLast(Objects.requireNonNull(scene, "scene"));
         if (!inCallback && !applyingTransitions) {
             applyTransitionsOrFail();
@@ -298,6 +300,14 @@ public final class GameRuntime implements AutoCloseable {
         if (inCallback || applyingTransitions || closingExecution) {
             throw new IllegalStateException(
                 operation + " is allowed only at an idle host boundary"
+            );
+        }
+    }
+
+    private void requireNotClosingExecution(String operation) {
+        if (closingExecution) {
+            throw new IllegalStateException(
+                operation + " is not allowed during execution cleanup"
             );
         }
     }
