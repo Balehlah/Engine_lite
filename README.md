@@ -267,6 +267,47 @@ anterior antes de criar o seguinte. `GdxGameRuntimeLoop` conecta esse contrato
 ao scheduler fixo do backend libGDX sem introduzir dependências gráficas em
 `engine:core`.
 
+### Assets tipados e ownership por grupo
+
+O contrato incubador em `engine.incubator.assets` substitui lookup por string
+sem tipo por `AssetId<T extends SharedAssetData>`. `AssetManifest` é imutável,
+declara um grupo de lifecycle e rejeita IDs, aliases de source, paths absolutos
+e traversal ambíguos antes de qualquer chamada ao backend. O source é sempre
+relativo ao resolver do pacote/classpath; um fallback opcional é selecionado
+com diagnóstico explícito quando o source principal não existe.
+
+`GdxAssetService` recebe um `AssetManager` vazio e assume ownership exclusivo
+dele. Produtores concorrentes podem enfileirar manifests; `update` realiza o
+trabalho assíncrono e publica `AssetProgress` na thread do backend. Sources
+iguais e de mesmo tipo são compartilhados entre grupos pelo refcount do
+libGDX. Cada grupo libera uma referência exatamente uma vez e o último unload
+descarta o recurso. O serviço e os grupos também devem ser fechados na thread
+do backend.
+
+```java
+AssetId<LevelData> LEVEL = AssetId.of("level.intro", LevelData.class);
+AssetManifest manifest = AssetManifest.builder("intro-scene")
+    .add(LEVEL, "levels/intro.json", "levels/fallback.json")
+    .build();
+
+AssetLoad load = assets.load(manifest);
+while (!load.isDone()) {
+    assets.update();
+}
+AssetGroupHandle group = load.completion().toCompletableFuture().join();
+LevelData level = group.handle(LEVEL).value();
+context.resources().register(scene, "assets:intro", group, AssetGroupHandle::close);
+```
+
+`LevelData` no exemplo implementa `SharedAssetData` e expõe somente dados
+transitivamente imutáveis. A implementação concreta do backend pode possuir
+recursos descartáveis privados; o consumidor nunca recebe autoridade de
+dispose. Depois que o grupo fecha, todo handle daquela geração falha com
+`AssetFailure.STALE_HANDLE`, mesmo que um grupo de mesmo nome seja recarregado.
+`AssetMetrics` audita grupos, referências, loads/unloads físicos, falhas e
+acessos stale; `isAtResourceBaseline()` exige nenhuma carga pendente, grupo,
+referência ou asset de backend vivo.
+
 ### Controles do Demo
 
 - **WASD / Setas**: Mover

@@ -23,3 +23,22 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
+
+val assetServiceCwdSmoke = tasks.register<JavaExec>("assetServiceCwdSmoke") {
+    group = "verification"
+    description = "Loads a typed classpath asset from a real external working directory."
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("engine.incubator.gdx.assets.AssetServiceCwdProbe")
+
+    val externalCwd = layout.buildDirectory.dir("tmp/asset-service-external-cwd")
+    doFirst {
+        val directory = externalCwd.get().asFile
+        directory.mkdirs()
+        workingDir(directory)
+    }
+}
+
+tasks.named("test") {
+    dependsOn(assetServiceCwdSmoke)
+}
