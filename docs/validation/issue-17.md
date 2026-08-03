@@ -4,8 +4,8 @@
 - Branch: `codex/issue-17-game-context-lifecycle`
 - Base consumida: `44a9098`
 - Issue: [#17](https://github.com/Balehlah/Engine_lite/issues/17)
-- Estado: implementação, validação local e CI remota Windows/Linux concluídas;
-  revisões dos papéis responsáveis permanecem gates antes de merge/fechamento
+- Estado: critérios de aceite, validação local, CI remota Windows/Linux e
+  revisões independentes dos três papéis concluídos no SHA de código `ff6cebb`
 
 ## Gate de entrada e escopo
 
@@ -151,20 +151,24 @@ completo foi repetido desde `clean` com sucesso.
 
 ## Evidência remota
 
-O PR draft [#64](https://github.com/Balehlah/Engine_lite/pull/64), commit
-`8438892`, disparou a execução
-[30768992253](https://github.com/Balehlah/Engine_lite/actions/runs/30768992253).
+O PR draft [#64](https://github.com/Balehlah/Engine_lite/pull/64), commit de
+código `ff6cebb`, disparou a execução
+[30773683211](https://github.com/Balehlah/Engine_lite/actions/runs/30773683211).
 Os dois jobs obrigatórios terminaram com sucesso:
 
-- [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30768992253/job/91552704698):
-  build, testes, compatibilidade e smokes aprovados em 2m26s;
-- [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30768992253/job/91552704649):
+- [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/30773683211/job/91565118209):
+  build, testes, compatibilidade e smokes aprovados em 2m18s;
+- [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/30773683211/job/91565118171):
   os mesmos gates, incluindo o caminho específico do runner Windows, aprovados
-  em 3m27s.
+  em 3m34s.
 
-A solicitação formal de revisão dos papéis `engine-developer`, `qa_validator` e
-`technical_coordinator` foi publicada na conversa do PR. O PR permanece draft
-e nenhuma aprovação própria ou merge automático foi realizado.
+As revisões independentes finais de `engine-developer`, `qa_validator` e
+`technical_coordinator` avaliaram o SHA exato `ff6cebb` e retornaram **PASS**,
+sem achados bloqueantes, maiores ou menores. As rodadas anteriores encontraram
+e bloquearam reentrância de lifecycle/cleanup, autoridade pública indevida e
+remoção por `equals`; cada achado foi corrigido e recebeu regressão antes do
+parecer final. O PR permanece draft e nenhuma aprovação própria ou merge
+automático foi realizado.
 
 ## Riscos residuais e rollback
 
@@ -181,9 +185,9 @@ Rollback: reverter os arquivos da Issue #17 remove o namespace lifecycle, o
 adapter GDX, seus testes e as duas extensões de allowlist. Timing, input,
 Java2D legado, saves, assets existentes e API estável permanecem intactos.
 
-## Gates externos restantes
+## Entrega e governança
 
-Antes de fechar a issue, o PR ainda deve receber revisão do papel
-`engine-developer`, validação independente do `qa_validator` e aprovação do
-`technical_coordinator`. A CI Windows/Linux está verde; nenhum gate humano é
-inferido a partir da validação local ou remota automatizada.
+Não resta critério de aceite técnico pendente no SHA de código `ff6cebb`. O
+commit que atualiza esta seção é exclusivamente documental; seu próprio CI deve
+permanecer verde antes da entrega final. Merge do PR e fechamento da issue não
+são automáticos e continuam como ações de governança do repositório.
