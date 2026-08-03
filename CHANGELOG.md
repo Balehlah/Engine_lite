@@ -42,6 +42,11 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   foco e `FakeInput` determinístico.
 - Adapter libGDX que reduz callbacks a eventos, aplica `screenToVirtual` por
   tick após resize/DPI e identifica explicitamente barras do viewport.
+- `GameContext` incubador por execução, lifecycle determinístico de cenas,
+  ownership único de entidades/eventos/assets/recursos, autoridade de shutdown
+  exclusiva do host e métricas de leak.
+- Adapter libGDX que conecta o novo lifecycle ao scheduler fixed timestep sem
+  ampliar a API estável ou contaminar `engine:core` com o backend.
 
 ### Alterado
 
@@ -73,6 +78,7 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   Issue #60.
 - Adicionado o registro reproduzível de implementação e validação da Issue #15.
 - Adicionado o contrato e o registro reproduzível de validação da Issue #16.
+- Adicionado o contrato e o registro reproduzível de validação da Issue #17.
 
 ---
 

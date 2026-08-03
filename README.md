@@ -238,6 +238,35 @@ com origem inferior esquerda e distingue `VIEWPORT`, `BARS` e
 fila; a simulação do spike reage exclusivamente aos snapshots. `FakeInput`
 reproduz scripts inteiramente em memória com a mesma sequência de snapshots.
 
+### GameContext e lifecycle determinístico
+
+O runtime incubador em `engine.incubator.runtime.lifecycle` cria um
+`GameContext` novo para cada execução. O contexto contém somente estado local:
+entidades, eventos, assets e ownership de recursos. Não existe instância
+estática ou singleton nesse contrato.
+
+`GameRuntime` executa cenas na ordem `create`, `enter`, `fixedUpdate`/`render`,
+`exit` e `dispose`. Uma cena solicita a próxima por
+`GameContext.requestScene`; pedidos feitos dentro de callbacks entram em uma
+fila FIFO e só são aplicados depois que o callback atual termina. Exceções em
+qualquer fase fecham a execução por `finally`, preservam a falha original e
+acrescentam falhas de cleanup como suprimidas.
+
+`restart` e `close` são comandos exclusivos do host e são rejeitados durante
+callbacks, transições ou cleanup, inclusive dentro de um `ResourceDisposer`.
+Cenas podem registrar recursos no owner recebido, mas não expõem autoridade
+pública para fechar `GameContext`, encerrar o registro ou manipular o lifecycle
+de owners. Assim que o descarte de um owner começa, novas transições e novos
+registros de estado ou recursos nesse owner são rejeitados.
+
+Entidades, eventos, assets e recursos declaram um único owner por identidade.
+O owner é liberado de forma idempotente, recursos são descartados uma vez em
+ordem inversa ao registro e `ResourceMetrics` expõe owners vivos, tentativas,
+falhas e leaks. Fora de callbacks, `restart` fecha integralmente o contexto
+anterior antes de criar o seguinte. `GdxGameRuntimeLoop` conecta esse contrato
+ao scheduler fixo do backend libGDX sem introduzir dependências gráficas em
+`engine:core`.
+
 ### Controles do Demo
 
 - **WASD / Setas**: Mover
