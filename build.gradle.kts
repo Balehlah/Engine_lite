@@ -476,12 +476,14 @@ val inspectJars = tasks.register("inspectJars") {
         }
         check(engineGdxClasses.all {
             it.startsWith("engine/incubator/gdx/spike/") ||
+                it.startsWith("engine/incubator/gdx/assets/") ||
                 it.startsWith("engine/incubator/gdx/input/") ||
                 it.startsWith("engine/incubator/gdx/runtime/")
         }) {
             "engine:gdx may package only isolated spike/input/runtime implementations: " +
                 engineGdxClasses.filterNot {
                     it.startsWith("engine/incubator/gdx/spike/") ||
+                        it.startsWith("engine/incubator/gdx/assets/") ||
                         it.startsWith("engine/incubator/gdx/input/") ||
                         it.startsWith("engine/incubator/gdx/runtime/")
                 }
@@ -552,7 +554,7 @@ val inspectJars = tasks.register("inspectJars") {
                     appendLine("$label=${file.name}; classes=$classes; notices=present")
                 }
                 appendLine("stable-api-owner=engine-core")
-                appendLine("engine-gdx=isolated-spike-input-runtime-and-assets")
+                appendLine("engine-gdx=isolated-spike-input-runtime-and-typed-assets")
                 appendLine("desktop-main=lwjgl3-launcher")
                 appendLine("desktop-legacy=no-stable-api-duplication")
                 appendLine("game=no-engine-classes")
@@ -1072,6 +1074,7 @@ val verifyLegacyClassParity = tasks.register("verifyLegacyClassParity") {
                     .map { it.relativeTo(root).invariantSeparatorsPath }
                     .filterNot {
                         it.startsWith("engine/api/") ||
+                            it.startsWith("engine/incubator/assets/") ||
                             it.startsWith("engine/incubator/runtime/input/") ||
                             it.startsWith("engine/incubator/runtime/lifecycle/") ||
                             it.startsWith("engine/incubator/runtime/time/")
