@@ -1075,9 +1075,11 @@ val verifyLegacyClassParity = tasks.register("verifyLegacyClassParity") {
                     .filterNot {
                         it.startsWith("engine/api/") ||
                             it.startsWith("engine/incubator/assets/") ||
+                            it.startsWith("engine/incubator/events/") ||
                             it.startsWith("engine/incubator/runtime/input/") ||
                             it.startsWith("engine/incubator/runtime/lifecycle/") ||
-                            it.startsWith("engine/incubator/runtime/time/")
+                            it.startsWith("engine/incubator/runtime/time/") ||
+                            it.startsWith("engine/incubator/world/id/")
                     }
                     .toList()
             }

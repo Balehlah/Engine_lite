@@ -1,5 +1,7 @@
 package engine.incubator.runtime.lifecycle;
 
+import engine.incubator.events.WorldEventBus;
+import engine.incubator.world.id.IdGenerator;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -9,19 +11,23 @@ import java.util.function.Consumer;
 public final class GameContext {
     private final long executionId;
     private final OwnedResourceRegistry resources = new OwnedResourceRegistry();
-    private final WorldState world = new WorldState(resources);
-    private final RuntimeEventQueue events = new RuntimeEventQueue(resources);
+    private final WorldState world;
     private final AssetStore assets = new AssetStore(resources);
 
     private Consumer<RuntimeScene> transitionRequester;
     private boolean closing;
     private boolean closed;
 
-    GameContext(long executionId, Consumer<RuntimeScene> transitionRequester) {
+    GameContext(
+        long executionId,
+        Consumer<RuntimeScene> transitionRequester,
+        IdGenerator idGenerator
+    ) {
         if (executionId < 1L) {
             throw new IllegalArgumentException("executionId must be positive");
         }
         this.executionId = executionId;
+        world = new WorldState(resources, Objects.requireNonNull(idGenerator, "idGenerator"));
         this.transitionRequester = Objects.requireNonNull(
             transitionRequester,
             "transitionRequester"
@@ -42,8 +48,8 @@ public final class GameContext {
         return world;
     }
 
-    public RuntimeEventQueue events() {
-        return events;
+    public WorldEventBus events() {
+        return world.events();
     }
 
     public AssetStore assets() {
@@ -69,7 +75,8 @@ public final class GameContext {
             executionId,
             closed,
             world.entityCount(),
-            events.size(),
+            events().pendingEventCount(),
+            events().subscriptionCount(),
             assets.size(),
             resources.metrics()
         );
@@ -83,7 +90,6 @@ public final class GameContext {
     void releaseOwner(Object owner) {
         Throwable failure = null;
         world.releaseOwner(owner);
-        events.releaseOwner(owner);
         assets.releaseOwner(owner);
         try {
             resources.disposeOwner(owner);
@@ -102,7 +108,6 @@ public final class GameContext {
         closing = true;
         transitionRequester = null;
         world.clear();
-        events.clear();
         assets.clear();
 
         Throwable failure = null;

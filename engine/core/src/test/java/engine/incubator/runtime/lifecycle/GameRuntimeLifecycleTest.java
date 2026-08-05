@@ -1,5 +1,7 @@
 package engine.incubator.runtime.lifecycle;
 
+import engine.incubator.events.EventPhase;
+import engine.incubator.events.EventType;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,6 +18,9 @@ import org.junit.jupiter.api.Test;
 
 @Tag("specification")
 final class GameRuntimeLifecycleTest {
+    private static final EventType<String> STATE_EVENT =
+        EventType.of("runtime.state", String.class);
+
     @Test
     void hostLifecycleCommandsAreRejectedInsideCallbacksWithoutMutatingExecution() {
         GameRuntime runtime = new GameRuntime();
@@ -239,7 +244,7 @@ final class GameRuntimeLifecycleTest {
             current = current.next;
             assertAll(
                 () -> assertEquals(1, runtime.context().world().entityCount()),
-                () -> assertEquals(1, runtime.context().events().size()),
+                () -> assertEquals(1, runtime.context().events().pendingEventCount()),
                 () -> assertEquals(1, runtime.context().assets().size())
             );
         }
@@ -272,7 +277,7 @@ final class GameRuntimeLifecycleTest {
                 () -> assertTrue(runtime.metrics().lastClosedContext().isClean()),
                 () -> assertFalse(previous == current),
                 () -> assertEquals(1, current.world().entityCount()),
-                () -> assertEquals(1, current.events().size()),
+                () -> assertEquals(1, current.events().pendingEventCount()),
                 () -> assertEquals(1, current.assets().size()),
                 () -> assertEquals("asset-" + current.executionId(), current.assets().get("current"))
             );
@@ -357,7 +362,12 @@ final class GameRuntimeLifecycleTest {
         @Override
         public void create(GameContext context) {
             context.world().add(this, "entity-" + id);
-            context.events().post(this, "event-" + id);
+            context.events().post(
+                this,
+                EventPhase.AFTER_FIXED_UPDATE,
+                STATE_EVENT,
+                "event-" + id
+            );
             context.assets().put(this, "asset-" + id, new Object(), ignored -> {
                 disposedAssets.incrementAndGet();
             });
@@ -399,11 +409,16 @@ final class GameRuntimeLifecycleTest {
             assertEquals(restart + 1L, context.executionId());
             assertAll(
                 () -> assertEquals(0, context.world().entityCount()),
-                () -> assertEquals(0, context.events().size()),
+                () -> assertEquals(0, context.events().pendingEventCount()),
                 () -> assertEquals(0, context.assets().size())
             );
             context.world().add(this, "entity-" + context.executionId());
-            context.events().post(this, "event-" + context.executionId());
+            context.events().post(
+                this,
+                EventPhase.AFTER_FIXED_UPDATE,
+                STATE_EVENT,
+                "event-" + context.executionId()
+            );
             context.assets().put(
                 this,
                 "current",
