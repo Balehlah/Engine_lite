@@ -26,7 +26,7 @@ e demo permanecem fora do escopo.
 | ID | Value object positivo e comparável, estável durante a vida do mundo |
 | Geração | `IdGenerator` injetável; sequência default crescente e reproduzível |
 | Overflow | `Long.MAX_VALUE` é emitido uma vez; chamadas seguintes falham sem wrap |
-| Colisão | O mundo rejeita ID duplicado antes de alterar seus índices |
+| Colisão | O mundo reserva cada ID emitido até o close, inclusive após remove/unload |
 | Escopo | Um gerador e um bus novos por mundo/restart; nenhum estado global |
 | Tipagem | `EventType<T>` valida o payload antes de entrar na fila |
 | Fases | Quatro filas explícitas; somente a fase solicitada é drenada |
@@ -40,7 +40,9 @@ e demo permanecem fora do escopo.
 - [x] **IDs não colidem e a sequência é reproduzível.**
   `equalSeedsProduceTheSameCollisionFreeSequence` compara duas sequências de
   10.000 IDs; `aBrokenInjectedGeneratorCannotCreateAnIdCollision` prova o gate
-  defensivo no `WorldState`.
+  defensivo no `WorldState`. As regressões `anEmittedIdCannotBeReusedAfterEntityRemoval`
+  e `anEmittedIdCannotBeReusedAfterOwnerUnload` preservam tombstones durante
+  toda a vida do mundo.
 - [x] **Ordem de handlers é documentada e determinística.**
   `eventsAreFifoPerPhaseAndHandlersFollowSubscriptionOrder` cobre FIFO de
   eventos, isolamento de fase e ordem de registro; a ordem normativa está em
@@ -64,33 +66,45 @@ Evidências adicionais:
 - 100 restarts: `oneHundredWorldRestartsResetIdsAndCloseEveryOldBus` cria 101
   mundos, reproduz o primeiro ID e invalida todos os buses/handles anteriores.
 
+## Remediação da primeira revisão independente
+
+As primeiras revisões de `engine-developer` e `qa_validator` bloquearam o SHA
+`9b1eea2`: a verificação de colisão consultava somente entidades vivas, então
+um gerador customizado poderia reutilizar um ID após `remove` ou unload. O
+`WorldState` agora mantém tombstones em `issuedIds` por toda a vida do mundo;
+a remoção da entidade não libera sua identidade. As duas regressões citadas
+acima reproduzem os caminhos de remoção direta e unload de owner.
+
 ## Execuções locais
 
 Suíte direcionada:
 
 ```text
 gradlew.bat --no-daemon :engine:core:test
-  -PtestRandomSeed=1941
-  -PisolatedBuildRoot=C:\tmp\engine-lite-issue19-core-review
+  --tests engine.incubator.runtime.lifecycle.WorldStateIdentityTest
+  --tests engine.incubator.world.id.SequentialIdGeneratorTest
+  --no-build-cache --rerun-tasks
+  -PtestRandomSeed=1951
+  -PisolatedBuildRoot=C:\tmp\engine-lite-issue19-collision-fix
 ```
 
-Resultado: `BUILD SUCCESSFUL`; 69 testes de `engine:core` passaram e
+Resultado: `BUILD SUCCESSFUL`; oito testes direcionados passaram e
 `verifyBackendIndependence` aprovou 62 fontes.
 
 Gate canônico final:
 
 ```text
 gradlew.bat --no-daemon clean test --no-build-cache --rerun-tasks
-  -PtestRandomSeed=1949
-  -PisolatedBuildRoot=C:\tmp\engine-lite-issue19-clean-final-1949
+  -PtestRandomSeed=1957
+  -PisolatedBuildRoot=C:\tmp\engine-lite-issue19-review-fix-1957
 ```
 
-Resultado: `BUILD SUCCESSFUL` em 44 s; 41 tasks acionáveis, 35 executadas e
+Resultado: `BUILD SUCCESSFUL` em 37 s; 41 tasks acionáveis, 35 executadas e
 seis atualizadas. Relatórios JUnit:
 
 | Módulo | Testes | Falhas/erros | Skips esperados |
 |---|---:|---:|---:|
-| `engine:core` | 69 | 0 | 0 |
+| `engine:core` | 71 | 0 | 0 |
 | `engine:gdx` | 37 | 0 | 0 |
 | `desktop` | 34 | 0 | 12 |
 

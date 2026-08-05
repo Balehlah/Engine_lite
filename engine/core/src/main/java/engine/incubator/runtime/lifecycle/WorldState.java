@@ -5,11 +5,13 @@ import engine.incubator.world.id.EntityId;
 import engine.incubator.world.id.IdGenerator;
 import engine.incubator.world.id.SequentialIdGenerator;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Per-execution entity registry with explicit ownership.
@@ -23,6 +25,7 @@ public final class WorldState {
     private final IdentityHashMap<Object, EntityId> idsByEntity = new IdentityHashMap<>();
     private final IdentityHashMap<Object, Object> ownersByEntity = new IdentityHashMap<>();
     private final LinkedHashMap<EntityId, Object> entitiesById = new LinkedHashMap<>();
+    private final Set<EntityId> issuedIds = new HashSet<>();
 
     WorldState(OwnedResourceRegistry ownership) {
         this(ownership, new SequentialIdGenerator());
@@ -51,7 +54,7 @@ public final class WorldState {
         }
 
         EntityId id = Objects.requireNonNull(idGenerator.next(), "generated EntityId");
-        if (entitiesById.containsKey(id)) {
+        if (!issuedIds.add(id)) {
             throw new IllegalStateException("IdGenerator produced a duplicate EntityId: " + id);
         }
         entitiesByOwner.computeIfAbsent(owner, ignored -> new ArrayList<>()).add(id);
@@ -128,6 +131,7 @@ public final class WorldState {
         idsByEntity.clear();
         ownersByEntity.clear();
         entitiesById.clear();
+        issuedIds.clear();
         events.close();
     }
 }

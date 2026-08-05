@@ -65,6 +65,51 @@ final class WorldStateIdentityTest {
     }
 
     @Test
+    void anEmittedIdCannotBeReusedAfterEntityRemoval() {
+        OwnedResourceRegistry ownership = new OwnedResourceRegistry();
+        Object owner = new Object();
+        ownership.registerOwner(owner, "scene");
+        EntityId duplicate = new EntityId(11L);
+        WorldState world = new WorldState(ownership, () -> duplicate);
+        Object first = new Object();
+        Object second = new Object();
+
+        assertEquals(duplicate, world.register(owner, first));
+        assertTrue(world.remove(first));
+        assertThrows(IllegalStateException.class, () -> world.register(owner, second));
+        assertAll(
+            () -> assertEquals(0, world.entityCount()),
+            () -> assertFalse(world.entity(duplicate).isPresent()),
+            () -> assertFalse(world.idOf(second).isPresent())
+        );
+        world.releaseOwner(owner);
+        ownership.close();
+    }
+
+    @Test
+    void anEmittedIdCannotBeReusedAfterOwnerUnload() {
+        OwnedResourceRegistry ownership = new OwnedResourceRegistry();
+        Object firstOwner = new Object();
+        Object secondOwner = new Object();
+        ownership.registerOwner(firstOwner, "first-scene");
+        ownership.registerOwner(secondOwner, "second-scene");
+        EntityId duplicate = new EntityId(13L);
+        WorldState world = new WorldState(ownership, () -> duplicate);
+
+        assertEquals(duplicate, world.register(firstOwner, new Object()));
+        world.releaseOwner(firstOwner);
+        ownership.disposeOwner(firstOwner);
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> world.register(secondOwner, new Object())
+        );
+        assertEquals(0, world.entityCount());
+        world.releaseOwner(secondOwner);
+        ownership.close();
+    }
+
+    @Test
     void removingAnEqualEntityRemovesTheExactRegisteredInstance() {
         OwnedResourceRegistry ownership = new OwnedResourceRegistry();
         Object owner = new Object();

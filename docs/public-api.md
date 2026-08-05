@@ -76,7 +76,9 @@ Cada `WorldState` recebe um `IdGenerator` próprio. O default
 injetável e solicita um gerador novo por execução; assim, mundos independentes
 podem reproduzir a mesma sequência sem compartilhar identidade global. O
 registro rejeita qualquer colisão produzida por um gerador customizado antes
-de alterar o estado do mundo. `WorldState.register(owner, entity)` retorna o
+de alterar o estado do mundo. IDs emitidos nunca são reutilizados dentro do
+mesmo mundo, mesmo após remoção da entidade ou unload do owner.
+`WorldState.register(owner, entity)` retorna o
 novo ID; o método `add(owner, entity)` preserva seu retorno fluente anterior e
 o ID correspondente pode ser consultado por `idOf(entity)`.
 
