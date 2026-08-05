@@ -47,9 +47,16 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   exclusiva do host e métricas de leak.
 - Adapter libGDX que conecta o novo lifecycle ao scheduler fixed timestep sem
   ampliar a API estável ou contaminar `engine:core` com o backend.
+- `EntityId` incubador por mundo, gerador sequencial injetável e overflow
+  explícito sem colisão ou wrap.
+- `WorldEventBus` síncrono e tipado, com filas explícitas por fase, ordem FIFO,
+  handles idempotentes e cleanup de subscriptions/eventos no unload.
 
 ### Alterado
 
+- `GameContext.events()` passa do polling não tipado de `RuntimeEventQueue`
+  para publicação/dispatch por `EventType<T>` e `EventPhase`; consumidores do
+  contrato incubador devem migrar conforme `docs/public-api.md`.
 - Todos os JARs próprios do Engine Lite recebem versão e notices consistentes
   em `META-INF`.
 - `clean test` também valida distribuição, API, dependências e assets.
@@ -66,6 +73,8 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 
 ### Documentação
 
+- Documentados ordem, reentrância, ownership e migração dos IDs/eventos da
+  Issue #19.
 - Registradas as decisões de produto, plataformas, Java, licença, API,
   viewport e backend da Issue #9.
 - Adicionados ADRs, auditoria de fundação, roadmap e política de versionamento.

@@ -1,7 +1,10 @@
 package engine.incubator.runtime.lifecycle;
 
+import engine.incubator.world.id.IdGenerator;
+import engine.incubator.world.id.SequentialIdGenerator;
 import java.util.ArrayDeque;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Owns deterministic scene transitions and isolated {@link GameContext} executions.
@@ -13,6 +16,7 @@ import java.util.Objects;
  */
 public final class GameRuntime implements AutoCloseable {
     private final ArrayDeque<RuntimeScene> pendingScenes = new ArrayDeque<>();
+    private final Supplier<? extends IdGenerator> idGeneratorFactory;
     private GameContext context;
     private SceneState activeScene;
     private GameContextSnapshot lastClosedContext;
@@ -26,6 +30,15 @@ public final class GameRuntime implements AutoCloseable {
     private boolean closed;
 
     public GameRuntime() {
+        this(SequentialIdGenerator::new);
+    }
+
+    /** Creates one fresh injected ID generator for every execution/restart. */
+    public GameRuntime(Supplier<? extends IdGenerator> idGeneratorFactory) {
+        this.idGeneratorFactory = Objects.requireNonNull(
+            idGeneratorFactory,
+            "idGeneratorFactory"
+        );
         createExecution();
     }
 
@@ -130,8 +143,12 @@ public final class GameRuntime implements AutoCloseable {
     }
 
     private void createExecution() {
+        IdGenerator idGenerator = Objects.requireNonNull(
+            idGeneratorFactory.get(),
+            "idGeneratorFactory result"
+        );
         executionsStarted++;
-        context = new GameContext(executionsStarted, this::requestScene);
+        context = new GameContext(executionsStarted, this::requestScene, idGenerator);
     }
 
     private void invokeActiveCallback(Runnable callback, String phase) {

@@ -1,5 +1,14 @@
 package engine.incubator.runtime.lifecycle;
 
+import engine.incubator.events.EventHandler;
+import engine.incubator.events.EventPhase;
+import engine.incubator.events.EventSubscription;
+import engine.incubator.events.EventType;
+import engine.incubator.events.WorldEventBus;
+import engine.incubator.world.id.EntityId;
+import engine.incubator.world.id.EntityIdExhaustedException;
+import engine.incubator.world.id.IdGenerator;
+import engine.incubator.world.id.SequentialIdGenerator;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -23,10 +32,18 @@ final class NoMutableSingletonTest {
             OwnedResourceRegistry.class,
             ResourceDisposer.class,
             ResourceMetrics.class,
-            RuntimeEventQueue.class,
             RuntimeMetrics.class,
             RuntimeScene.class,
-            WorldState.class
+            WorldState.class,
+            EventHandler.class,
+            EventPhase.class,
+            EventSubscription.class,
+            EventType.class,
+            WorldEventBus.class,
+            EntityId.class,
+            EntityIdExhaustedException.class,
+            IdGenerator.class,
+            SequentialIdGenerator.class
         );
 
         runtimeTypes.forEach(type -> assertAll(

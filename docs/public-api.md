@@ -63,6 +63,52 @@ O uso conjunto de `jdeps` e do catálogo impede que uma dependência marcada
 incorretamente ou um tipo interno passe silenciosamente ao classpath contratual
 do consumidor.
 
+## Identidade e eventos incubadores por mundo
+
+A Issue #19 adiciona os contratos experimentais `engine.incubator.world.id.*`
+e `engine.incubator.events.*`. Eles não ampliam a baseline `engine.api.*` e
+permanecem sujeitos à política de migração de APIs incubadoras.
+
+Cada `WorldState` recebe um `IdGenerator` próprio. O default
+`SequentialIdGenerator` produz valores positivos em ordem crescente, retorna
+`Long.MAX_VALUE` uma única vez e depois falha com
+`EntityIdExhaustedException`, sem wrap. `GameRuntime` recebe uma factory
+injetável e solicita um gerador novo por execução; assim, mundos independentes
+podem reproduzir a mesma sequência sem compartilhar identidade global. O
+registro rejeita qualquer colisão produzida por um gerador customizado antes
+de alterar o estado do mundo. IDs emitidos nunca são reutilizados dentro do
+mesmo mundo, mesmo após remoção da entidade ou unload do owner.
+`WorldState.register(owner, entity)` retorna o
+novo ID; o método `add(owner, entity)` preserva seu retorno fluente anterior e
+o ID correspondente pode ser consultado por `idOf(entity)`.
+
+Cada mundo também possui exatamente um `WorldEventBus`. Publicação exige
+`EventType<T>` explícito, owner pertencente ao mundo e uma destas filas:
+`BEFORE_FIXED_UPDATE`, `AFTER_FIXED_UPDATE`, `BEFORE_RENDER` ou
+`AFTER_RENDER`. O host escolhe explicitamente a fronteira chamando
+`dispatch(phase)`; drenar uma fase nunca drena outra.
+
+A ordem determinística é normativa:
+
+1. eventos da mesma fase são entregues em FIFO;
+2. para cada evento, handlers ativos rodam na ordem de assinatura;
+3. uma assinatura criada durante um handler começa no evento seguinte;
+4. um handle cancelado antes de seu turno não é chamado;
+5. eventos publicados durante dispatch entram no fim da fila da fase;
+6. dispatch recursivo é rejeitado, evitando interleaving da pilha de handlers.
+
+`EventSubscription.unsubscribe()`/`close()` são idempotentes e seguros durante
+dispatch. O unload de um owner remove imediatamente seus handles e eventos
+ainda enfileirados. O fechamento do mundo invalida todos os handles e limpa
+todas as fases; um restart cria bus e gerador novos. Esses pacotes dependem
+somente do JDK e de contratos backend-neutral de `engine:core`.
+
+Migração do contrato lifecycle anterior: substitua
+`RuntimeEventQueue.post(owner, payload)` por
+`WorldEventBus.post(owner, phase, eventType, payload)` e substitua polling
+manual por `dispatch(phase)` com handlers tipados. `GameContext.events()`
+continua sendo o ponto de acesso ao bus pertencente ao mundo atual.
+
 ## Conteúdo dos JARs
 
 `inspectJars` valida os cinco artifacts atuais:

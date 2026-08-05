@@ -1,5 +1,7 @@
 package engine.incubator.runtime.lifecycle;
 
+import engine.incubator.events.EventPhase;
+import engine.incubator.events.EventType;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,6 +14,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 @Tag("specification")
 final class GameRuntimeFailureTest {
+    private static final EventType<Object> FAILURE_EVENT =
+        EventType.of("runtime.failure", Object.class);
+
     @ParameterizedTest(name = "cleanup survives injected {0} failure")
     @EnumSource(FailurePhase.class)
     void everyCallbackFailureStillDisposesTheSceneOwnerAndContext(FailurePhase phase) {
@@ -76,7 +81,12 @@ final class GameRuntimeFailureTest {
         @Override
         public void create(GameContext context) {
             context.world().add(this, new Object());
-            context.events().post(this, new Object());
+            context.events().post(
+                this,
+                EventPhase.AFTER_FIXED_UPDATE,
+                FAILURE_EVENT,
+                new Object()
+            );
             context.assets().put(this, "owned", new Object(), ignored -> {
                 assetDisposals.incrementAndGet();
             });

@@ -28,9 +28,11 @@ sourceSets {
                 "engine/api/**/*.java",
                 "engine/core/Timer.java",
                 "engine/incubator/assets/**/*.java",
+                "engine/incubator/events/**/*.java",
                 "engine/incubator/runtime/input/**/*.java",
                 "engine/incubator/runtime/lifecycle/**/*.java",
                 "engine/incubator/runtime/time/**/*.java",
+                "engine/incubator/world/id/**/*.java",
                 "engine/math/Vector2.java",
                 "engine/util/**/*.java",
             )

@@ -8,6 +8,7 @@ public record GameContextSnapshot(
     boolean closed,
     int entityCount,
     int eventCount,
+    int eventSubscriptionCount,
     int assetCount,
     ResourceMetrics resources
 ) {
@@ -15,6 +16,7 @@ public record GameContextSnapshot(
         return closed
             && entityCount == 0
             && eventCount == 0
+            && eventSubscriptionCount == 0
             && assetCount == 0
             && !resources.hasLeaks();
     }
