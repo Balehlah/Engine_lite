@@ -4,9 +4,9 @@
 - Branch: `codex/issue-20-config-logging-metrics`
 - Base consumida: `7608403`
 - Issue: [#20](https://github.com/Balehlah/Engine_lite/issues/20)
-- Estado: cinco critérios de aceite e todas as evidências técnicas obrigatórias
-  concluídos localmente; CI remota e revisões dos papéis responsáveis continuam
-  gates de governança antes de merge/fechamento
+- Estado: cinco critérios de aceite, evidências técnicas obrigatórias e CI
+  remota Windows/Linux em Java 21/25 concluídos; revisões dos papéis responsáveis
+  continuam gates de governança antes de merge/fechamento
 
 ## Gate de entrada e escopo
 
@@ -153,6 +153,24 @@ A primeira execução completa encontrou somente a allowlist de paridade legada
 sem os três novos namespaces incubadores. A allowlist foi ampliada de forma
 específica e o gate inteiro foi repetido frio, com sucesso.
 
+## CI remota
+
+O PR draft [#67](https://github.com/Balehlah/Engine_lite/pull/67), commit de
+código `b264657`, disparou a execução
+[31278308081](https://github.com/Balehlah/Engine_lite/actions/runs/31278308081).
+Os dois jobs obrigatórios terminaram com sucesso:
+
+- [Ubuntu](https://github.com/Balehlah/Engine_lite/actions/runs/31278308081/job/93155377283):
+  testes completos em Java 21, reutilização do build cache, compatibilidade
+  Java 25, distribuição e smokes do ZIP em Java 21/25;
+- [Windows](https://github.com/Balehlah/Engine_lite/actions/runs/31278308081/job/93155377304):
+  testes completos em Java 21, compatibilidade Java 25, distribuição, Mesa
+  llvmpipe fixado com prova de rejeição de checksum e smokes do ZIP em Java
+  21/25.
+
+Ambos também verificaram que o ZIP canônico permaneceu inalterado e publicaram
+relatórios JUnit/HTML, pacote e evidências do runtime.
+
 ## Riscos residuais e rollback
 
 Riscos não bloqueadores:
@@ -162,8 +180,7 @@ Riscos não bloqueadores:
   volume e cardinalidade;
 - o spike publica zero para assets tipados porque ainda não migra seus recursos
   históricos para `GdxAssetService`; o adapter `AssetHealthMetrics.from`
-  preserva os contadores reais para consumidores do serviço tipado;
-- Linux e Java 25 permanecem responsabilidade da CI remota.
+  preserva os contadores reais para consumidores do serviço tipado.
 
 Rollback: reverter os arquivos da Issue #20 remove os três namespaces do core,
 config empacotada, logger/collector, novo overlay, integração do launcher e
@@ -172,8 +189,7 @@ e API estável permanecem intactos.
 
 ## Gates de governança restantes
 
-Antes de merge ou fechamento da issue, a branch publicada ainda deve receber CI
-verde Windows/Linux (Java 21/25), revisão do papel `engine-developer`, validação
-independente de `qa_validator` e aprovação do `technical_coordinator`. Esses
-gates não são inferidos a partir da validação local e nenhum merge automático
-foi realizado.
+Antes de merge ou fechamento da issue, a branch publicada ainda deve receber
+revisão do papel `engine-developer`, validação independente de `qa_validator` e
+aprovação do `technical_coordinator`. Esses gates não são inferidos a partir da
+validação local ou da CI e nenhum merge automático foi realizado.
