@@ -1,16 +1,18 @@
 package engine.incubator.gdx.spike;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import engine.incubator.runtime.config.EngineConfigLoader;
 import java.nio.file.Path;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-@Tag("specification")
 final class SpikeRunConfigurationTest {
+    @TempDir
+    Path temporaryDirectory;
+
     @Test
-    void normalizesAnAbsoluteEvidenceDirectory() {
+    void exposesTheImmutableLoadedConfigurationAndNormalizedEvidenceDirectory() {
         Path absolute = Path.of(
             System.getProperty("java.io.tmpdir"),
             "issue-14",
@@ -18,16 +20,14 @@ final class SpikeRunConfigurationTest {
             "evidence"
         ).toAbsolutePath();
 
-        var configuration = new SpikeRunConfiguration(true, absolute);
+        var loaded = EngineConfigLoader.load(
+            temporaryDirectory.toAbsolutePath(),
+            new String[] {"--evidence-dir=" + absolute}
+        );
+        var configuration = new SpikeRunConfiguration(true, loaded);
 
         assertEquals(absolute.normalize(), configuration.evidenceDirectory());
-    }
-
-    @Test
-    void rejectsRelativeEvidenceDirectory() {
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new SpikeRunConfiguration(true, Path.of("relative"))
-        );
+        assertEquals(loaded.configuration(), configuration.engineConfig());
+        assertEquals(loaded, configuration.loadedConfig());
     }
 }

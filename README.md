@@ -215,6 +215,60 @@ O overlay fica oculto durante a captura dos goldens para não alterar as fixture
 pixel-perfect. O backend Java2D continua como fallback legado e não foi migrado
 por esta entrega.
 
+### Configuração, logging contextual e saúde do frame
+
+O runtime incubador em `engine.incubator.runtime.config` constrói uma
+`EngineConfig` imutável e validada antes de inicializar o backend. A precedência
+é determinística e aplicada por campo:
+
+1. defaults internos;
+2. `<application-home>/config/engine.properties`, quando presente;
+3. overrides de CLI.
+
+O launcher aceita `--config=<arquivo-absoluto>` e
+`--set=<campo>=<valor>`. `--overlay`/`--no-overlay` são aliases para
+`debug.overlay-enabled`, e `--evidence-dir=<path>` é o alias de
+`paths.evidence-directory`. Um campo repetido na CLI, um campo desconhecido ou
+um valor fora dos limites falha antes da janela abrir e informa o nome e o valor
+rejeitados. Paths relativos configurados são resolvidos contra o application
+home, nunca contra o CWD; o caminho fornecido por `--config` precisa ser
+absoluto.
+
+| Campo | Default | Limite/semântica |
+|---|---:|---|
+| `runtime.updates-per-second` | `60.0` | finito, `> 0` e `<= 1e9` |
+| `runtime.maximum-frame-time-ms` | `250` | `1..60000` |
+| `runtime.maximum-catch-up-steps` | `5` | `1..10000` |
+| `graphics.virtual-width` / `graphics.virtual-height` | `320` / `180` | `1..32768` |
+| `graphics.window-width` / `graphics.window-height` | `640` / `360` | `1..32768` |
+| `graphics.vsync` | `true` | `true` ou `false` |
+| `graphics.foreground-fps` / `graphics.idle-fps` | `60` / `60` | `1..1000` |
+| `debug.overlay-enabled` | `false` | togglable em execução com `F3` |
+| `logging.level` | `INFO` | `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR` ou `OFF` |
+| `metrics.sample-window-ms` | `1000` | janela de FPS/UPS em `1..60000` ms |
+| `paths.evidence-directory` | diretório temporário da JVM | absoluto ou relativo ao application home |
+
+`engine.incubator.runtime.logging` produz eventos locais estruturados por sink
+injetável e não instala singleton. Eventos de frame no adapter de lifecycle
+carregam `frame`, `tick` e o `world`/execution ID; eventos de host que não têm
+essas coordenadas não inventam campos. Não há telemetria remota.
+
+`FrameMetricsCollector` usa clock monotônico injetável e publica FPS, UPS,
+frame, tick, updates do frame, clamp/catch-up, assets e draw calls. O
+`RuntimeDebugOverlay` mostra o mesmo snapshot e exclui seu próprio draw call da
+métrica para evitar feedback. Desligado, o caminho quente é somente a leitura
+do estado e um branch; nenhuma string é formatada e nenhum draw é emitido. O
+smoke empacotado captura `metrics-overlay.png` somente depois dos três goldens e
+confirma que renderizar o overlay não altera a simulação. O benchmark local é:
+
+```batch
+gradlew.bat :engine:gdx:benchmarkDisabledOverlay
+```
+
+```bash
+./gradlew :engine:gdx:benchmarkDisabledOverlay
+```
+
 ### Input imutável por tick
 
 O runtime incubador em `engine.incubator.runtime.input` separa callbacks do

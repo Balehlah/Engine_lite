@@ -130,3 +130,26 @@ O task raiz `verifyDistribution` agrega baseline, fronteiras, licenças, assets 
 JARs e também inspeciona o ZIP, o backend, o inventário exato de natives
 Windows/Linux, a ausência de payload proibido e os textos completos de licença
 distribuídos. Ele faz parte de `clean test`, o gate executado pela CI desktop.
+
+## Configuração, logging e métricas incubadores
+
+A Issue #20 adiciona `engine.incubator.runtime.config`,
+`engine.incubator.runtime.logging` e `engine.incubator.runtime.metrics`. Esses
+pacotes não ampliam `engine.api.*` e podem evoluir conforme a política de APIs
+incubadoras.
+
+`EngineConfigLoader` resolve defaults, arquivo e CLI nessa ordem, registra a
+origem vencedora de cada campo e rejeita configuração inválida antes de criar o
+backend. O application home é uma entrada absoluta; o arquivo padrão fica em
+`config/engine.properties` dentro da distribuição e paths relativos usam essa
+raiz em vez do CWD.
+
+`EngineLogger` é imutável, recebe clock e sink e cria filhos com `LogContext`
+sem estado global. `frame`/`tick` são não negativos e `world` é o execution ID
+positivo do `GameContext` quando há um mundo aplicável. `LogFormatter` limita o
+formato a campos conhecidos e mantém cada evento em uma linha.
+
+`FrameMetricsCollector` recebe `NanoClock`, `SchedulerMetrics`, saúde de assets
+e draw calls para produzir `FrameHealthMetrics`. A implementação libGDX lê esse
+snapshot; ela não é fonte paralela de contadores nem autoridade para alterar a
+simulação.

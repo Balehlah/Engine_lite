@@ -16,12 +16,16 @@ final class EvidenceWriter {
         "viewport.log",
         "timing.log",
         "input.log",
+        "config.log",
+        "runtime.log",
+        "metrics.log",
         "summary.properties",
         "failure.log",
         "probe-tone.wav",
         "viewport-640x360.png",
         "viewport-800x600.png",
         "viewport-1280x720.png",
+        "metrics-overlay.png",
     };
 
     private final Path directory;

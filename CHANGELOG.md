@@ -51,6 +51,12 @@ política completa está em [docs/versioning.md](docs/versioning.md).
   explícito sem colisão ou wrap.
 - `WorldEventBus` síncrono e tipado, com filas explícitas por fase, ordem FIFO,
   handles idempotentes e cleanup de subscriptions/eventos no unload.
+- Configuração incubadora imutável com defaults, arquivo empacotado, overrides
+  de CLI, validação com campo/valor e resolução de paths independente do CWD.
+- Logging local contextual por sink injetável e snapshots comparáveis de
+  FPS/UPS/frame/tick/catch-up/assets/draw calls, sem telemetria remota.
+- Overlay de saúde do frame togglable por `F3`, screenshot de smoke e benchmark
+  reproduzível do caminho desligado.
 
 ### Alterado
 
@@ -88,6 +94,7 @@ política completa está em [docs/versioning.md](docs/versioning.md).
 - Adicionado o registro reproduzível de implementação e validação da Issue #15.
 - Adicionado o contrato e o registro reproduzível de validação da Issue #16.
 - Adicionado o contrato e o registro reproduzível de validação da Issue #17.
+- Adicionado o contrato e o registro reproduzível de validação da Issue #20.
 
 ---
 

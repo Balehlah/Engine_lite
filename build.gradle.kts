@@ -742,6 +742,7 @@ val verifyDistribution = tasks.register("verifyDistribution") {
             "third_party/licenses/LWJGL-BSD-3-Clause.txt",
             "third_party/licenses/OpenAL-Soft-LGPL-2.0-or-later.txt",
             "third_party/licenses/stb-MIT-or-Public-Domain.txt",
+            "config/engine.properties",
             "bin/$spikeApplicationName",
             "bin/$spikeApplicationName.bat",
             "lib/${desktopJar.name}",
@@ -1076,8 +1077,11 @@ val verifyLegacyClassParity = tasks.register("verifyLegacyClassParity") {
                         it.startsWith("engine/api/") ||
                             it.startsWith("engine/incubator/assets/") ||
                             it.startsWith("engine/incubator/events/") ||
+                            it.startsWith("engine/incubator/runtime/config/") ||
                             it.startsWith("engine/incubator/runtime/input/") ||
                             it.startsWith("engine/incubator/runtime/lifecycle/") ||
+                            it.startsWith("engine/incubator/runtime/logging/") ||
+                            it.startsWith("engine/incubator/runtime/metrics/") ||
                             it.startsWith("engine/incubator/runtime/time/") ||
                             it.startsWith("engine/incubator/world/id/")
                     }

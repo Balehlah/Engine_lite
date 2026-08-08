@@ -39,6 +39,14 @@ val assetServiceCwdSmoke = tasks.register<JavaExec>("assetServiceCwdSmoke") {
     }
 }
 
+val benchmarkDisabledOverlay = tasks.register<JavaExec>("benchmarkDisabledOverlay") {
+    group = "verification"
+    description = "Measures the allocation-free disabled overlay branch without a GL context."
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("engine.incubator.gdx.spike.DebugOverlayDisabledBenchmark")
+}
+
 tasks.named("test") {
     dependsOn(assetServiceCwdSmoke)
 }
