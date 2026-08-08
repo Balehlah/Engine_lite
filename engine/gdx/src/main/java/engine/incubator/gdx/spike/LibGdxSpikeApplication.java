@@ -21,6 +21,14 @@ import engine.incubator.runtime.input.InputEventQueue;
 import engine.incubator.runtime.input.InputSnapshot;
 import engine.incubator.runtime.input.ScreenToVirtual;
 import engine.incubator.runtime.input.TickInput;
+import engine.incubator.runtime.logging.EngineLogger;
+import engine.incubator.runtime.logging.LogContext;
+import engine.incubator.runtime.logging.LogFormatter;
+import engine.incubator.runtime.metrics.AssetHealthMetrics;
+import engine.incubator.runtime.metrics.FrameHealthMetrics;
+import engine.incubator.runtime.metrics.FrameMetricsCollector;
+import engine.incubator.runtime.time.FixedTimestepScheduler;
+import engine.incubator.runtime.time.SystemNanoClock;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
@@ -35,8 +43,6 @@ import java.util.HexFormat;
  * One-screen, removable libGDX acceptance spike.
  */
 public final class LibGdxSpikeApplication extends ApplicationAdapter {
-    private static final int VIRTUAL_WIDTH = SpikeGraphicsPolicy.VIRTUAL_WIDTH;
-    private static final int VIRTUAL_HEIGHT = SpikeGraphicsPolicy.VIRTUAL_HEIGHT;
     private static final int SPRITE_WIDTH = 16;
     private static final int SPRITE_HEIGHT = 16;
     private static final int SPRITE_BASE_X = 144;
@@ -57,6 +63,8 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     };
 
     private final SpikeRunConfiguration configuration;
+    private final int virtualWidth;
+    private final int virtualHeight;
     private final DisposableRegistry disposables = new DisposableRegistry();
     private final Matrix4 virtualProjection = new Matrix4();
     private final Matrix4 backbufferProjection = new Matrix4();
@@ -69,7 +77,11 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     private TextureRegion virtualFrameBufferRegion;
     private GdxInputAdapter inputProcessor;
     private FixedTimestepLoop fixedTimestepLoop;
-    private FixedTimestepDebugOverlay fixedTimestepDebugOverlay;
+    private FrameMetricsCollector frameMetricsCollector;
+    private DebugOverlayState debugOverlayState;
+    private RuntimeDebugOverlay runtimeDebugOverlay;
+    private EngineLogger logger;
+    private FrameHealthMetrics latestFrameHealth;
     private double simulationTimeSeconds;
 
     private int fixtureIndex;
@@ -78,11 +90,14 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     private int inputWaitFrames;
     private long inputEventSequence;
     private long inputSequenceBeforeRequest;
+    private long loggedCatchUpHits;
     private int spriteOffsetX;
     private int smokeInputStage;
     private boolean resizeRequested;
     private boolean requestedBarEventObserved;
     private boolean requestedViewportEventObserved;
+    private boolean fixturesCompleted;
+    private boolean overlayEvidenceCaptured;
     private boolean smokeCompleted;
     private boolean disposed;
 
@@ -91,22 +106,41 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             configuration,
             "configuration"
         );
+        virtualWidth = configuration.engineConfig().virtualWidth();
+        virtualHeight = configuration.engineConfig().virtualHeight();
     }
 
     @Override
     public void create() {
         evidence = new EvidenceWriter(configuration.evidenceDirectory());
         evidence.beginRun();
+        logger = new EngineLogger(
+            "spike.runtime",
+            configuration.engineConfig().logLevel(),
+            java.time.Clock.systemUTC(),
+            record -> evidence.append("runtime.log", LogFormatter.format(record))
+        );
         evidence.append("lifecycle.log", "create.begin");
         try {
+            recordConfiguration();
             recordEnvironment();
             createRenderingResources();
             loadTiledProbe();
             runAudioProbe();
             installInputProcessor();
             recordInputPolicy();
-            fixedTimestepLoop = FixedTimestepLoop.createDefault();
+            fixedTimestepLoop = new FixedTimestepLoop(
+                new FixedTimestepScheduler(
+                    SystemNanoClock.INSTANCE,
+                    configuration.engineConfig().fixedTimestepConfig()
+                )
+            );
+            frameMetricsCollector = new FrameMetricsCollector(
+                SystemNanoClock.INSTANCE,
+                configuration.engineConfig().metricsSampleWindow()
+            );
             recordTimingPolicy();
+            logger.info("runtime created");
             evidence.append("lifecycle.log", "create.end");
         } catch (Throwable failure) {
             recordFailure("create", failure);
@@ -138,18 +172,27 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             fixedTimestepLoop.runFrame(
                 this::updateSimulation,
                 (alpha, metrics) -> {
-                    renderVirtualScene();
-                    renderBackbuffer();
+                    long drawCalls = renderVirtualScene() + renderBackbuffer();
+                    latestFrameHealth = frameMetricsCollector.recordFrame(
+                        metrics,
+                        AssetHealthMetrics.none(),
+                        drawCalls
+                    );
+                    logFrameHealth(latestFrameHealth);
                     if (!configuration.smoke()) {
-                        fixedTimestepDebugOverlay.render(
+                        runtimeDebugOverlay.render(
                             batch,
                             backbufferProjection,
                             Gdx.graphics.getBackBufferHeight(),
-                            metrics
+                            latestFrameHealth
                         );
                     }
                     if (configuration.smoke()) {
-                        advanceSmoke();
+                        if (fixturesCompleted && !smokeCompleted) {
+                            captureOverlayEvidence();
+                        } else {
+                            advanceSmoke();
+                        }
                     }
                 }
             );
@@ -202,6 +245,15 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         try {
             recordTimingMetrics();
             recordInputMetrics();
+            if (latestFrameHealth != null) {
+                logger.withContext(
+                    LogContext.worldFrame(
+                        1L,
+                        latestFrameHealth.frame(),
+                        latestFrameHealth.tick()
+                    )
+                ).info("runtime disposing");
+            }
             disposables.disposeAll(line -> evidence.append("dispose.log", line));
             if (configuration.smoke() && !smokeCompleted) {
                 throw new IllegalStateException(
@@ -286,6 +338,44 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         );
     }
 
+    private void recordConfiguration() {
+        var loaded = configuration.loadedConfig();
+        var engineConfig = configuration.engineConfig();
+        evidence.append(
+            "config.log",
+            "application.home="
+                + loaded.applicationHome()
+                + ";config.file="
+                + loaded.configurationFile().map(Object::toString).orElse("<defaults>")
+                + ";cwd-independent="
+                + loaded.applicationHome().isAbsolute()
+        );
+        engine.incubator.runtime.config.EngineConfigLoader.keys()
+            .stream()
+            .sorted()
+            .forEach(key -> evidence.append(
+                "config.log",
+                "field=" + key + ";source=" + loaded.sources().get(key)
+            ));
+        evidence.append(
+            "config.log",
+            "effective.fixed-ups="
+                + engineConfig.updatesPerSecond()
+                + ";effective.virtual="
+                + virtualWidth
+                + "x"
+                + virtualHeight
+                + ";effective.window="
+                + engineConfig.windowWidth()
+                + "x"
+                + engineConfig.windowHeight()
+                + ";effective.overlay="
+                + engineConfig.overlayEnabled()
+                + ";effective.log-level="
+                + engineConfig.logLevel()
+        );
+    }
+
     private void createRenderingResources() {
         FileHandle spriteHandle = Gdx.files.internal("spike/sprite.rgba");
         require(spriteHandle.exists(), "Internal sprite asset is missing.");
@@ -335,8 +425,8 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             "virtual-framebuffer",
             new FrameBuffer(
                 Pixmap.Format.RGBA8888,
-                VIRTUAL_WIDTH,
-                VIRTUAL_HEIGHT,
+                virtualWidth,
+                virtualHeight,
                 false
             )
         );
@@ -349,18 +439,21 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         );
         virtualFrameBufferRegion.flip(false, true);
         batch = disposables.own("sprite-batch", new SpriteBatch());
-        fixedTimestepDebugOverlay = disposables.own(
-            "fixed-timestep-debug-overlay",
-            new FixedTimestepDebugOverlay()
+        debugOverlayState = new DebugOverlayState(
+            configuration.engineConfig().overlayEnabled()
+        );
+        runtimeDebugOverlay = disposables.own(
+            "runtime-debug-overlay",
+            new RuntimeDebugOverlay(debugOverlayState)
         );
 
-        virtualProjection.setToOrtho2D(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        virtualProjection.setToOrtho2D(0, 0, virtualWidth, virtualHeight);
         evidence.append(
             "probe.log",
             "render.virtual="
-                + VIRTUAL_WIDTH
+                + virtualWidth
                 + "x"
-                + VIRTUAL_HEIGHT
+                + virtualHeight
                 + ";sprite="
                 + spriteSpec.width()
                 + "x"
@@ -460,6 +553,12 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         }
         if (input.isKeyPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
+        } else if (input.isKeyPressed(Input.Keys.F3)) {
+            boolean enabled = debugOverlayState.toggle();
+            logger.withContext(LogContext.frame(
+                fixedTimestepLoop.metrics().frameCount(),
+                input.tickIndex()
+            )).info("debug overlay " + (enabled ? "enabled" : "disabled"));
         } else if (input.isKeyPressed(Input.Keys.SPACE)) {
             spriteOffsetX = spriteOffsetX == 0 ? 8 : 0;
         }
@@ -500,8 +599,8 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         IntegerViewport viewport = IntegerViewport.calculate(
             backbufferWidth,
             backbufferHeight,
-            VIRTUAL_WIDTH,
-            VIRTUAL_HEIGHT
+            virtualWidth,
+            virtualHeight
         );
         return new ScreenToVirtual(
             logicalWidth,
@@ -512,8 +611,8 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             viewport.y(),
             viewport.width(),
             viewport.height(),
-            VIRTUAL_WIDTH,
-            VIRTUAL_HEIGHT
+            virtualWidth,
+            virtualHeight
         );
     }
 
@@ -638,9 +737,9 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         );
     }
 
-    private void renderVirtualScene() {
+    private int renderVirtualScene() {
         virtualFrameBuffer.begin();
-        Gdx.gl.glViewport(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        Gdx.gl.glViewport(0, 0, virtualWidth, virtualHeight);
         Gdx.gl.glClearColor(
             red(BACKGROUND_RGBA),
             green(BACKGROUND_RGBA),
@@ -659,17 +758,19 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             SPRITE_HEIGHT
         );
         batch.end();
+        int drawCalls = batch.renderCalls;
         virtualFrameBuffer.end();
+        return drawCalls;
     }
 
-    private void renderBackbuffer() {
+    private int renderBackbuffer() {
         int backbufferWidth = Gdx.graphics.getBackBufferWidth();
         int backbufferHeight = Gdx.graphics.getBackBufferHeight();
         IntegerViewport viewport = IntegerViewport.calculate(
             backbufferWidth,
             backbufferHeight,
-            VIRTUAL_WIDTH,
-            VIRTUAL_HEIGHT
+            virtualWidth,
+            virtualHeight
         );
 
         Gdx.gl.glViewport(0, 0, backbufferWidth, backbufferHeight);
@@ -686,6 +787,7 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
             viewport.height()
         );
         batch.end();
+        return batch.renderCalls;
     }
 
     private void advanceSmoke() {
@@ -817,9 +919,16 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         captureAndValidate(fixture);
         fixtureIndex++;
         if (fixtureIndex == FIXTURES.length) {
-            smokeCompleted = true;
-            evidence.append("lifecycle.log", "smoke.complete;exit.request");
-            Gdx.app.exit();
+            fixturesCompleted = true;
+            if (!debugOverlayState.isEnabled()) {
+                smokeCompleted = true;
+                evidence.append(
+                    "metrics.log",
+                    "overlay.capture=SKIP;reason=disabled"
+                );
+                evidence.append("lifecycle.log", "smoke.complete;exit.request");
+                Gdx.app.exit();
+            }
             return;
         }
 
@@ -828,12 +937,83 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
         resizeRequested = false;
     }
 
+    private void captureOverlayEvidence() {
+        require(!overlayEvidenceCaptured, "Overlay evidence was captured twice.");
+        require(latestFrameHealth != null, "Frame health is unavailable for overlay evidence.");
+        double simulationBefore = simulationTimeSeconds;
+        int spriteBefore = spriteOffsetX;
+        boolean rendered = runtimeDebugOverlay.render(
+            batch,
+            backbufferProjection,
+            Gdx.graphics.getBackBufferHeight(),
+            latestFrameHealth
+        );
+        require(rendered, "Configured overlay did not render.");
+        require(
+            Double.compare(simulationBefore, simulationTimeSeconds) == 0
+                && spriteBefore == spriteOffsetX,
+            "Overlay rendering changed simulation state."
+        );
+
+        int width = Gdx.graphics.getBackBufferWidth();
+        int height = Gdx.graphics.getBackBufferHeight();
+        Pixmap screenshot = disposables.own(
+            "screenshot-metrics-overlay",
+            Pixmap.createFromFrameBuffer(0, 0, width, height)
+        );
+        var screenshotPath = evidence.resolve("metrics-overlay.png");
+        PixmapIO.writePNG(
+            Gdx.files.absolute(screenshotPath.toString()),
+            screenshot,
+            -1,
+            true
+        );
+        overlayEvidenceCaptured = true;
+        smokeCompleted = true;
+        evidence.append(
+            "metrics.log",
+            "overlay.capture=PASS;overlay.simulation-unchanged=PASS"
+                + ";frame="
+                + latestFrameHealth.frame()
+                + ";tick="
+                + latestFrameHealth.tick()
+                + ";fps="
+                + latestFrameHealth.framesPerSecond()
+                + ";ups="
+                + latestFrameHealth.updatesPerSecond()
+                + ";draw-calls="
+                + latestFrameHealth.drawCalls()
+                + ";file="
+                + screenshotPath.getFileName()
+        );
+        evidence.append("lifecycle.log", "smoke.complete;exit.request");
+        Gdx.app.exit();
+    }
+
+    private void logFrameHealth(FrameHealthMetrics metrics) {
+        EngineLogger contextual = logger.withContext(
+            LogContext.worldFrame(1L, metrics.frame(), metrics.tick())
+        );
+        if (metrics.frame() == 1L) {
+            contextual.info("first frame completed");
+        }
+        if (
+            metrics.catchUpLimitHits() > loggedCatchUpHits
+        ) {
+            loggedCatchUpHits = metrics.catchUpLimitHits();
+            contextual.warn(
+                "catch-up limit reached; discarded-nanos="
+                    + metrics.catchUpDiscardedNanos()
+            );
+        }
+    }
+
     private void captureAndValidate(Fixture fixture) {
         IntegerViewport viewport = IntegerViewport.calculate(
             fixture.width(),
             fixture.height(),
-            VIRTUAL_WIDTH,
-            VIRTUAL_HEIGHT
+            virtualWidth,
+            virtualHeight
         );
         require(!viewport.degraded(), "Acceptance fixture entered degraded mode.");
         require(
@@ -998,6 +1178,19 @@ public final class LibGdxSpikeApplication extends ApplicationAdapter {
     }
 
     private void recordFailure(String phase, Throwable failure) {
+        if (logger != null) {
+            if (latestFrameHealth == null) {
+                logger.error(phase + " failed", failure);
+            } else {
+                logger.withContext(
+                    LogContext.worldFrame(
+                        1L,
+                        latestFrameHealth.frame(),
+                        latestFrameHealth.tick()
+                    )
+                ).error(phase + " failed", failure);
+            }
+        }
         if (evidence == null) {
             return;
         }

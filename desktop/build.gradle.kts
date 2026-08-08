@@ -453,6 +453,8 @@ val smokeSpikeDistribution = tasks.register("smokeSpikeDistribution") {
             val smokeArguments = listOf(
                 "--smoke",
                 "--evidence-dir=$absoluteEvidenceDirectory",
+                "--overlay",
+                "--set=metrics.sample-window-ms=100",
             )
             val command = when {
                 isWindows -> listOf(
@@ -687,8 +689,9 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
         check(evidenceFiles.isNotEmpty()) {
             "The smoke run did not produce evidence in ${smokeEvidenceDirectory.get().asFile}."
         }
-        val screenshots = evidenceFiles.filter {
-            it.extension.equals("png", ignoreCase = true)
+        val viewportScreenshots = evidenceFiles.filter {
+            it.name.startsWith("viewport-")
+                && it.extension.equals("png", ignoreCase = true)
         }
         val requiredScreenshots = setOf(
             "viewport-640x360.png",
@@ -696,12 +699,12 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
             "viewport-1280x720.png",
         )
         check(
-            screenshots.map(File::getName).toSet() == requiredScreenshots,
+            viewportScreenshots.map(File::getName).toSet() == requiredScreenshots,
         ) {
             "The smoke run must produce the three viewport PNGs; found " +
-                screenshots.map(File::getName)
+                viewportScreenshots.map(File::getName)
         }
-        screenshots.forEach { screenshot ->
+        viewportScreenshots.forEach { screenshot ->
             val dimensions = Regex("""viewport-(\d+)x(\d+)\.png""")
                 .matchEntire(screenshot.name)
                 ?: error("Unexpected viewport evidence name: ${screenshot.name}")
@@ -714,12 +717,25 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
                     "${expectedWidth}x$expectedHeight."
             }
         }
+        val overlayScreenshot = evidenceFiles.singleOrNull {
+            it.name == "metrics-overlay.png"
+        } ?: error("The smoke run did not produce metrics-overlay.png.")
+        val overlayImage = ImageIO.read(overlayScreenshot)
+            ?: error("Unable to decode overlay evidence: $overlayScreenshot")
+        check(overlayImage.width == 1280 && overlayImage.height == 720) {
+            "metrics-overlay.png is ${overlayImage.width}x${overlayImage.height}; " +
+                "expected the final 1280x720 fixture."
+        }
         val requiredEvidenceFiles = setOf(
             "lifecycle.log",
             "probe.log",
             "viewport.log",
             "timing.log",
             "input.log",
+            "config.log",
+            "runtime.log",
+            "metrics.log",
+            "metrics-overlay.png",
             "dispose.log",
             "openal.log",
             "process.stderr.log",
@@ -738,6 +754,29 @@ val generateSpikeEvidenceManifest = tasks.register("generateSpikeEvidenceManifes
         }
         check("failure.log" !in evidenceByName) {
             "The spike recorded failure evidence: ${evidenceByName.getValue("failure.log")}"
+        }
+        val configLog = evidenceByName.getValue("config.log").readText(Charsets.UTF_8)
+        check(
+            "cwd-independent=true" in configLog
+                && "field=debug.overlay-enabled;source=CLI" in configLog
+                && "field=runtime.updates-per-second;source=FILE" in configLog,
+        ) {
+            "Configuration evidence does not prove CWD independence and precedence."
+        }
+        val runtimeLog = evidenceByName.getValue("runtime.log").readText(Charsets.UTF_8)
+        check(
+            Regex("""\sframe=\d+\s+tick=\d+\s+world=1\s""")
+                .containsMatchIn(runtimeLog),
+        ) {
+            "Runtime logs do not contain bounded frame/tick/world context."
+        }
+        val metricsLog = evidenceByName.getValue("metrics.log").readText(Charsets.UTF_8)
+        check(
+            "overlay.capture=PASS" in metricsLog
+                && "overlay.simulation-unchanged=PASS" in metricsLog
+                && "draw-calls=" in metricsLog,
+        ) {
+            "Metrics evidence does not prove overlay capture and simulation invariance."
         }
 
         val summary = Properties()

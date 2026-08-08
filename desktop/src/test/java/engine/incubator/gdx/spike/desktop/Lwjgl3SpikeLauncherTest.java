@@ -6,8 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class Lwjgl3SpikeLauncherTest {
+    @TempDir
+    Path temporaryDirectory;
+
     @Test
     void parsesSmokeAndAbsoluteEvidenceDirectory() {
         Path evidenceDirectory = Path.of(
@@ -16,6 +20,7 @@ class Lwjgl3SpikeLauncherTest {
         ).toAbsolutePath().normalize();
 
         var configuration = Lwjgl3SpikeLauncher.parseRunConfiguration(
+            temporaryDirectory.toAbsolutePath(),
             new String[] {
                 "--smoke",
                 "--evidence-dir=" + evidenceDirectory
@@ -27,13 +32,14 @@ class Lwjgl3SpikeLauncherTest {
     }
 
     @Test
-    void rejectsRelativeEvidenceDirectory() {
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> Lwjgl3SpikeLauncher.parseRunConfiguration(
-                new String[] {"--evidence-dir=relative"}
-            )
+    void resolvesRelativeConfiguredPathsAgainstApplicationHomeRatherThanCwd() {
+        Path home = temporaryDirectory.toAbsolutePath();
+        var configuration = Lwjgl3SpikeLauncher.parseRunConfiguration(
+            home,
+            new String[] {"--evidence-dir=relative"}
         );
+
+        assertEquals(home.resolve("relative"), configuration.evidenceDirectory());
     }
 
     @Test
@@ -41,12 +47,14 @@ class Lwjgl3SpikeLauncherTest {
         assertThrows(
             IllegalArgumentException.class,
             () -> Lwjgl3SpikeLauncher.parseRunConfiguration(
+                temporaryDirectory.toAbsolutePath(),
                 new String[] {"--unknown"}
             )
         );
         assertThrows(
             IllegalArgumentException.class,
             () -> Lwjgl3SpikeLauncher.parseRunConfiguration(
+                temporaryDirectory.toAbsolutePath(),
                 new String[] {"--smoke", "--smoke"}
             )
         );
